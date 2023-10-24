@@ -1,0 +1,82 @@
+После присоединения к серверу он отправит:
+{"status": "ok", "info": "connected, please send your identificator"}
+
+
+У вас есть 30 секунд timeout чтобы отправить инденцифицирующие данные веб сокету
+
+инденцифицирующие данные для User:
+{"nick": "YourNick", "pass": "YourPassWord", "data": {}}
+В поле "nick" укажите ваш ник (на твиче, маленькими)
+В поле "pass" укажите ваш пин код к нику
+Поле "data" оставьте пустым, но обязательно его создайте
+
+инденцифицирующие данные для Admin:
+{"nicK": "AdminNick", "pass": "", "data": {"secret1": "secretTokenNumber1", "secret2": "secretTokenNumber2", "secret3": "secretTokenNumber3"}}
+В поле "nick" укажите имя админа
+Поле "pass" оставьте пустым, но обязательно его создайте
+В поле "data" еще один словарь:
+    В поле "secret1" укажите секретный токен номер 1
+    В поле "secret1" укажите секретный токен номер 2
+    В поле "secret1" укажите секретный токен номер 3
+
+После авторизации вебсокет отправит:
+{"status": "ok", "info": "successfully authorized"}
+
+Operations:
+sr.song.add - from Admin - Добавляет новую песню
+{"op": "sr.song.add", "User_nick": "NickNameUserToSendData", "data": {"vid_id": "YoutubeVideoId", "by": "TwitchUserName"}}
+Поле "op" - всегда "sr.song.add", название операции
+Поле "User_nick" - ник пользователя типа User, к которому идет это сообщение
+Поле "data" словарь:
+    Поле "vid_id" - идентификатор видео на YouTube, песни которую заказали
+    Поле "by" - юзер нейм чела на твиче, который поставил трек
+
+sr.song.remove - from any sender - Убирает песню
+{"op": "sr.song.remove", "User_nick": "NickNameUserToSendOrRecieveData", "data": {"vid_id": "YoutubeVideoId"}}
+Поле "op" - всегда "sr.song.remove", название операции
+Поле "User_nick" - ник пользователя типа User, к которому или от которого это сообщение
+Поле "data" словарь:
+    Поле "vid_id" - идентификатор видео на YouTube, песню которую по какой-то причине удаляют
+
+serv.answer - from any sender - Для ответа на запросы любых других операций
+{"op": "serv.answer", "User_nick": "NickNameUserToSendOrRecieveData", "data": {"op": "NameOfOperationToAnswer", "status": "StatusOkOrErr", "info": "SomeTextAboutSituation"}}
+Поле "op" - всегда "serv.answer", название операции
+Поле "User_nick" - ник пользователя типа User, к которому или от которого это сообщение=
+Поле "data" словарь:
+    Поле "op" - Название операции на которую вы отвечаете
+    Поле "status" - Название статуса, может быть либо ok, либо err
+    Поле "info" - Здесь можно написать любой текст, будь то сообщение "Все успешно", или причину ошибки
+    Поле "code" - Код ошибки.
+
+serv.ping - from any sender - Для пинга существования подключения пользователя
+{"op": "serv.ping", "User_nick": "NickNameUserToSendOrRecieveData", "data": {}}
+Поле "op" - всегда "serv.ping", название операции
+Поле "User_nick" - ник пользователя типа User, к которому или от которого это сообщение
+Поле "data" - пустое
+
+serv.check_ver - from Admin - Для проверки версии пользователя
+{"op": "serv.check_ver", "User_nick": "NickNameUserToCheckVersion", "data": {}}
+vse kak obichno, ya ustal eto pisat'
+
+serv.check_ver_answer - from User - Для ответа на проверку версии пользователя
+{"op": "serv.check_ver_answer", "User_nick": "NickNameToRecieveVersion", "data": {"ver": "VERSION"}}
+vse kak i vsegda
+data slovar':
+    Поле "ver" - пришлите сюда версию вашего приложения
+
+serv.User_disconnect - from Server to Admin - При отключении User'a сообщение админу
+{"op": "serv.User_disconnect", "User_nick": "NickNameOfUserWhoDisconected", "data": {}}
+bebebebe hehe haha
+
+Error Codes:
+6900 - Все хорошо, OK!
+6901 - "data in isnot json format" - Данные не в формате json. Для исправления: отправляйте данные в формате json.
+6902 - "data dont have needed fields" - Данные не имеют необходимые поля для операции. Для исправления: проверьте документацию. Любое сообщение должно содержать поля "op", "User_nick" и "data". Потом идет проверка содержания необходимых полей в словаре "data", они будут зависеть от операции.
+6903 - "secrets do not match" - Во время инденцификации Admin'a введенные секреты не совпадает с секретами в базе данных
+6904 - "nick not found" - Во время инденцификации User'a введенный nick не найден
+6905 - "incorrect password" - Во время инденцификации User'a введенный pass не совпадает с базой данных
+6906 - "that User is not connected" - Во время отправки сообщения Admin'om подключения к User'y с ником введённым в поле "User_nick" не существует
+6907 - "Admin not connected" - Во время отправки сообщения User'om не был подключен Admin
+6908 - "unknown operation" - вы передали операцию которую нет в списке
+
+

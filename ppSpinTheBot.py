@@ -27,6 +27,7 @@ import pandas as pd
 #from webptools import webpmux_getframe, dwebp, grant_permission
 import websockets as wbscks
 from PIL import Image, ImageDraw, ImageFont
+from bs4 import BeautifulSoup as BS
 
 #grant_permission()
 
@@ -40,10 +41,12 @@ CFGf.close()
     
 api_weather_ya =      CFG['api_weather_ya']
 api_weather_op =      CFG['api_weather_op']
-api_geocode =             CFG['api_geocode']
-api_openai =                 CFG['api_openai']
-sp_client_id =              CFG['sp_client_id']
-sp_client_secret =   CFG['sp_client_secret']
+api_geocode =         CFG['api_geocode']
+api_openai =          CFG['api_openai']
+sp_client_id =        CFG['sp_client_id']
+sp_client_secret =    CFG['sp_client_secret']
+todoist_token =       CFG['todoist_token']
+todoist_project_id =  CFG['todoist_project_id']
 
 #based_smiles = {'clear': "рџЊ¤", 'partly-cloudy': "рџЊҐ", 'cloudy': "вЃ", 'overcast': "рџЊ§", 'drizzle': "рџЊ§", 'light-rain': "рџЊ§", 'rain': "рџЊ§", 'moderate-rain': "рџЊ§", 'heavy-rain': "рџЊ§рџЊ§", 'continuous-heavy-rain': "рџЊ§рџЊ§рџЊ§рџЊ§", 'showers': "рџЊ§рџЊ§рџЊ§", 'wet-snow': "рџЊ§рџЊЁ", 'light-snow': "рџЊЁ", 'snow': "рџЊЁ", 'snow-showers': "рџЊЁрџЊЁ", 'hail': "рџЊ§", 'thunderstorm': "рџЊ©", 'thunderstorm-with-rain': "в›€", 'thunderstorm-with-hail': "в›€"}
 #based_sit       =  {'clear': "РЇСЃРЅРѕ", 'partly-cloudy': "РњР°Р»РѕРѕР±Р»Р°С‡РЅРѕ", 'cloudy': "РћР±Р»Р°С‡РЅРѕ СЃ РїСЂРѕСЏСЃРЅРµРЅРёСЏРјРё", 'overcast': "РџР°СЃРјСѓСЂРЅРѕ", 'drizzle': "РњРѕСЂРѕСЃСЊ", 'light-rain': "РќРµР±РѕР»СЊС€РѕР№ РґРѕР¶РґСЊ", 'rain': "Р”РѕР¶РґСЊ", 'moderate-rain': "РЈРјРµСЂРµРЅРЅРѕ СЃРёР»СЊРЅС‹Р№ РґРѕР¶РґСЊ", 'heavy-rain': "РЎРёР»СЊРЅС‹Р№ РґРѕР¶РґСЊ", 'continuous-heavy-rain': "РґР»РёС‚РµР»СЊРЅС‹Р№ СЃРёР»СЊРЅС‹Р№ РґРѕР¶РґСЊ", 'showers': "Р›РёРІРµРЅСЊ", 'wet-snow': "РЎРЅРµРіРѕРґРѕР¶РґСЊ", 'light-snow': "РќРµР±РѕР»СЊС€РѕР№ СЃРЅРµРі", 'snow': "СЃРЅРµРі", 'snow-showers': "РЎРЅРµРіРѕРїР°Рґ", 'hail': "Р“СЂР°Рґ", 'thunderstorm': "Р“СЂРѕР·Р°", 'thunderstorm-with-rain': "Р”РѕР¶РґСЊ СЃ РіСЂРѕР·РѕР№", 'thunderstorm-with-hail': "Р“СЂРѕР·Р° СЃ РіСЂР°РґРѕРј"}
@@ -82,6 +85,10 @@ class str0list0split:
             self.str += self.list[i]
             self.str += ' '
         self.str = self.str[0:len(self.str)-1]
+    def updateStr(self):
+        self.str = " ".join(self.list)
+    def updateList(self):
+        self.list = self.str.split()
 
 def fastListToStr(l):
     e = ''
@@ -172,7 +179,7 @@ async def aexec(code, **kwargs):
 class Bot(commands.Bot):
 
     def __init__(self): #РёРЅРёС‚ РіРѕРІРЅР°
-        super().__init__(token=CFG['oauth_ppSpin'], prefix='*', initial_channels=["POAL48", "pwgood", "alexproduct", "tatt04ek", "the_il_", "enihei", "shadowdemonhd_", "Alexoff35", "red3xtop", "orlega_", "wanderning_", "echoinshade", "erynga"])    
+        super().__init__(token=CFG['oauth_ppSpin'], prefix='*', initial_channels=["POAL48", "pwgood", "alexproduct", "tatt04ek", "the_il_", "enihei", "shadowdemonhd_", "Alexoff35", "red3xtop", "orlega", "wanderning_", "echoinshade", "erynga", "spazmmmm", "ppspin", "scarrow227", "avacuoss"])    
         self.msgs = []
         self.pwe = True
         self.pwr = " РЅРѕ "
@@ -182,13 +189,15 @@ class Bot(commands.Bot):
         self.USERDATA={'bans': [], 'notify': {'pwgood': {'stream': False}}}
         self.evtimer = dt.datetime.now()
         self.tgfw = ''
+        self.tgfwcd = ''
         self.turningOn = 1
         self.avaGame = json.load(open("avaGame.data", 'r'))
         self.avaGameAdd = json.load(open("avaGameAdd.data", 'r'))
         self.loop_ = {'enabled': False}
         self.testDataLoop = {'a': 0, 'b': 1, 'c': 2, 'd': 3, 'e': 4, 'f': 5}
-        self.isLastMsgPpSpin = {'poal48': False, 'tatt04ek': False, 'the_il_': False, 'enihei': False, 'shadowdemonhd_': False, 'red3xtop': False, 'orlega_': False, 'wanderning_': False, 'echoinshade': False}
+        self.isLastMsgPpSpin = {'poal48': False, 'tatt04ek': False, 'the_il_': False, 'enihei': False, 'shadowdemonhd_': False, 'red3xtop': False, 'orlega': False, 'wanderning_': False, 'echoinshade': False, 'spazmmmm': False, 'avacuoss': False, 'scarrow227': False}
         self.isReconnect7tvEvents = False
+        self.tokensSp = {}
         
 
     async def event_ready(self): #РєРѕРіРґР° СЂР°Р±РѕС‚Р°РµС‚
@@ -211,6 +220,9 @@ class Bot(commands.Bot):
         self.emtswand = req.get("https://7tv.io/v3/emote-sets/631db3cc4f3e0f1fc59fa8d9").json()['emotes']
         self.emtsecho = req.get("https://7tv.io/v3/emote-sets/647ef56b28b72684e122574c").json()['emotes']
         self.emtserynga = req.get("https://7tv.io/v3/emote-sets/64a2c96712c2ceffb1120915").json()['emotes']
+        self.emtsspazm = req.get("https://7tv.io/v3/emote-sets/62fa4af4aeaec3fa3d52561b").json()['emotes']
+        self.emtsavacus = req.get("https://7tv.io/v3/emote-sets/64ee47a7917b802c9c5aedaf").json()['emotes']
+        self.emtsscr = req.get("https://7tv.io/v3/emote-sets/61f7db4d4f8c353cf9fc2cfb").json()['emotes']
         print("\nEmotes loaded!\n")
         elpsd = dt.datetime.now()
         self.danks = []
@@ -392,9 +404,9 @@ class Bot(commands.Bot):
                 httpi = tio.http.TwitchHTTP(self, api_token = CFG['api_token_ppSpin'])
                 pu = PartialUser(httpi, 489926403, 'red3xtop')
                 await pu.timeout_user(CFG['api_token_ppSpin'], 841491788, ctx.author.id, 1, "пипо ваниш")
-            if message.channel.name == "orlega_":
+            if message.channel.name == "orlega":
                 httpi = tio.http.TwitchHTTP(self, api_token = CFG['api_token_ppSpin'])
-                pu = PartialUser(httpi, 511985939, 'orlega_')
+                pu = PartialUser(httpi, 511985939, 'orlega')
                 await pu.timeout_user(CFG['api_token_ppSpin'], 841491788, ctx.author.id, 1, "пипо ваниш")
             if message.channel.name == "wanderning_":
                 httpi = tio.http.TwitchHTTP(self, api_token = CFG['api_token_ppSpin'])
@@ -403,6 +415,14 @@ class Bot(commands.Bot):
             if message.channel.name == "echoinshade":
                 httpi = tio.http.TwitchHTTP(self, api_token = CFG['api_token_ppSpin'])
                 pu = PartialUser(httpi, 423469896, 'echoinshade')
+                await pu.timeout_user(CFG['api_token_ppSpin'], 841491788, ctx.author.id, 1, "пипо ваниш")
+            if message.channel.name == "spazmmmm":
+                httpi = tio.http.TwitchHTTP(self, api_token = CFG['api_token_ppSpin'])
+                pu = PartialUser(httpi, 729507870, 'spazmmmm')
+                await pu.timeout_user(CFG['api_token_ppSpin'], 841491788, ctx.author.id, 1, "пипо ваниш")
+            if message.channel.name == "avacuoss":
+                httpi = tio.http.TwitchHTTP(self, api_token = CFG['api_token_ppSpin'])
+                pu = PartialUser(httpi, 796371850, 'avacuoss')
                 await pu.timeout_user(CFG['api_token_ppSpin'], 841491788, ctx.author.id, 1, "пипо ваниш")
                     
 
@@ -574,28 +594,28 @@ class Bot(commands.Bot):
                     if not self.turningOn: await self.get_channel("red3xtop").send("gachiBASS SadgeCry")
 
                 info = await self.fetch_channel("511985939")
-                if self.USERDATA['notify']['orlega_']['title'] != info.title:
-                    self.USERDATA['notify']['orlega_']['title'] = info.title
+                if self.USERDATA['notify']['orlega']['title'] != info.title:
+                    self.USERDATA['notify']['orlega']['title'] = info.title
                     self.saveUserData()
                     httpi = tio.http.TwitchHTTP(self, api_token = CFG['api_token_ppSpin'])
-                    pu = PartialUser(httpi, 511985939, 'orlega_')
+                    pu = PartialUser(httpi, 511985939, 'orlega')
                     if not self.turningOn: await pu.chat_announcement(CFG['api_token_ppSpin'], 841491788, f"Pag Название изменено 👉 {info.title}")
-                info = await self.search_channels("orlega_")
+                info = await self.search_channels("orlega")
                 for i in range(len(info)):
-                    if info[i].name == "orlega_":
+                    if info[i].name == "orlega":
                         info = info[i]
                         break
-                if info.live and not self.USERDATA['notify']['orlega_']['stream']:
-                    self.USERDATA['notify']['orlega_']['stream'] = True
+                if info.live and not self.USERDATA['notify']['orlega']['stream']:
+                    self.USERDATA['notify']['orlega']['stream'] = True
                     self.saveUserData()
                     httpi = tio.http.TwitchHTTP(self, api_token = CFG['api_token_ppSpin'])
-                    pu = PartialUser(httpi, 511985939, 'orlega_')
+                    pu = PartialUser(httpi, 511985939, 'orlega')
                     if not self.turningOn: await pu.chat_announcement(CFG['api_token_ppSpin'], 841491788, f"orlega Стримит!! stare")
-                    if not self.turningOn: await self.more500send(self.get_channel("orlega_"), " ".join(self.USERDATA['orlega_']['massping']), "stare", "stare")
-                if not info.live and self.USERDATA['notify']['orlega_']['stream']:
-                    self.USERDATA['notify']['orlega_']['stream'] = False
+                    if not self.turningOn: await self.more500send(self.get_channel("orlega"), " ".join(self.USERDATA['orlega']['massping']), "stare", "stare")
+                if not info.live and self.USERDATA['notify']['orlega']['stream']:
+                    self.USERDATA['notify']['orlega']['stream'] = False
                     self.saveUserData()
-                    if not self.turningOn: await self.get_channel("orlega_").send("gachiBASS peepoSad")
+                    if not self.turningOn: await self.get_channel("orlega").send("gachiBASS peepoSad")
 
                 info = await self.fetch_channel("738421324")
                 if self.USERDATA['notify']['wanderning_']['title'] != info.title:
@@ -644,7 +664,87 @@ class Bot(commands.Bot):
                     self.USERDATA['notify']['echo']['stream'] = False
                     self.saveUserData()
                     if not self.turningOn: await self.get_channel("echoinshade").send("Sadge")
+
+                info = await self.fetch_channel("729507870")
+                if self.USERDATA['notify']['spazmmmm']['title'] != info.title:
+                    self.USERDATA['notify']['spazmmmm']['title'] = info.title
+                    self.saveUserData()
+                    httpi = tio.http.TwitchHTTP(self, api_token = CFG['api_token_ppSpin'])
+                    pu = PartialUser(httpi, 729507870, 'spazmmmm')
+                    if not self.turningOn: await pu.chat_announcement(CFG['api_token_ppSpin'], 841491788, f"KAVO Название изменено 👉 {info.title}")
+                info = await self.search_channels("spazmmmm")
+                for i in range(len(info)):
+                    if info[i].name == "spazmmmm":
+                        info = info[i]
+                        break
+                if info.live and not self.USERDATA['notify']['spazmmmm']['stream']:
+                    self.USERDATA['notify']['spazmmmm']['stream'] = True
+                    self.saveUserData()
+                    httpi = tio.http.TwitchHTTP(self, api_token = CFG['api_token_ppSpin'])
+                    pu = PartialUser(httpi, 729507870, 'spazmmmm')
+                    if not self.turningOn: await pu.chat_announcement(CFG['api_token_ppSpin'], 841491788, f"Стрим начался! spazmmmm")
+                    if not self.turningOn: await self.more500send(self.get_channel("spazmmmm"), " ".join(self.USERDATA['spazmmmm']['massping']), "spazmmmm", "spazmmmm")
+                if not info.live and self.USERDATA['notify']['spazmmmm']['stream']:
+                    self.USERDATA['notify']['spazmmmm']['stream'] = False
+                    self.saveUserData()
+                    if not self.turningOn: await self.get_channel("spazmmmm").send("SadChamp")
+
+                info = await self.fetch_channel("796371850")
+                if self.USERDATA['notify']['avacuoss']['title'] != info.title:
+                    self.USERDATA['notify']['avacuoss']['title'] = info.title
+                    self.saveUserData()
+                    httpi = tio.http.TwitchHTTP(self, api_token = CFG['api_token_ppSpin'])
+                    pu = PartialUser(httpi, 796371850, 'avacuoss')
+                    if not self.turningOn: await pu.chat_announcement(CFG['api_token_ppSpin'], 841491788, f"Pog Название изменено 👉 {info.title}")
+                info = await self.search_channels("avacuoss")
+                for i in range(len(info)):
+                    if info[i].name == "avacuoss":
+                        info = info[i]
+                        break
+                if info.live and not self.USERDATA['notify']['avacuoss']['stream']:
+                    self.USERDATA['notify']['avacuoss']['stream'] = True
+                    self.saveUserData()
+                    httpi = tio.http.TwitchHTTP(self, api_token = CFG['api_token_ppSpin'])
+                    pu = PartialUser(httpi, 796371850, 'avacuoss')
+                    if not self.turningOn: await pu.chat_announcement(CFG['api_token_ppSpin'], 841491788, f"Стрим начался! Zevaka")
+                    if not self.turningOn: await self.more500send(self.get_channel("avacuoss"), " ".join(self.USERDATA['avacuoss']['massping']), "Zevaka", "Zevaka")
+                if not info.live and self.USERDATA['notify']['avacuoss']['stream']:
+                    self.USERDATA['notify']['avacuoss']['stream'] = False
+                    self.saveUserData()
+                    if not self.turningOn: await self.get_channel("avacuoss").send("BRORIsLitterallyCRYING")
+
+                info = await self.fetch_channel("153128317")
+                if self.USERDATA['notify']['scarrow227']['title'] != info.title:
+                    self.USERDATA['notify']['scarrow227']['title'] = info.title
+                    self.saveUserData()
+                    httpi = tio.http.TwitchHTTP(self, api_token = CFG['api_token_ppSpin'])
+                    pu = PartialUser(httpi, 153128317, 'scarrow227')
+                    if not self.turningOn: await pu.chat_announcement(CFG['api_token_ppSpin'], 841491788, f"happie Название изменено 👉 {info.title}")
+                info = await self.search_channels("scarrow227")
+                for i in range(len(info)):
+                    if info[i].name == "scarrow227":
+                        info = info[i]
+                        break
+                if info.live and not self.USERDATA['notify']['scarrow227']['stream']:
+                    self.USERDATA['notify']['scarrow227']['stream'] = True
+                    self.saveUserData()
+                    httpi = tio.http.TwitchHTTP(self, api_token = CFG['api_token_ppSpin'])
+                    pu = PartialUser(httpi, 153128317, 'scarrow227')
+                    if not self.turningOn: await pu.chat_announcement(CFG['api_token_ppSpin'], 841491788, f"Стрим начался! buh")
+                    if not self.turningOn: await self.more500send(self.get_channel("scarrow227"), " ".join(self.USERDATA['scarrow227']['massping']), "buh", "buh")
+                if not info.live and self.USERDATA['notify']['scarrow227']['stream']:
+                    self.USERDATA['notify']['scarrow227']['stream'] = False
+                    self.saveUserData()
+                    if not self.turningOn: await self.get_channel("scarrow227").send("SAJ")
                                         
+                for i in self.USERDATA['spotify'].keys():
+                    if self.USERDATA['spotify'][i]['balls']:
+                        pu = self.create_user(self.USERDATA['spotify'][i]['user_id'], i)
+                        reward = await pu.get_custom_rewards(self.sp_data[i]['twitch'], ids=[self.USERDATA['spotify'][i]['balls']], force=True)
+                        red = await reward[0].get_redemptions(self.sp_data[i]['twitch'], "UNFULFILLED")
+                        try: await self.sr_next(ctx.channel, red[0])                        
+                        except IndexError: pass
+
                 if self.tgfw:
                     if self.tgfw == "[]pingtotw[]poal[]":
                         await self.get_channel("poal48").send("Пинг из телеграмма uuh")
@@ -654,12 +754,24 @@ class Bot(commands.Bot):
                         self.tgfw = ''
                     else:
                         fw = "(New post at tg-pwgоod): "
-                        await asyncio.sleep(3)
+                        await asyncio.sleep(4)
                         fw += self.tgfw
                         self.tgfw = ""
                         print(fw)
                         if not self.USERDATA['notify']['pwgood']['stream']:
-                            if not self.turningOn: await self.more500send(self.get_channel("pwgood"), fw, delay=1)
+                            if not self.turningOn: await self.more500send(self.get_channel("pwgood"), fw, delay=2)
+                        else:
+                            if not self.turningOn: await self.more500send(self.get_channel("poal48"), "Хотел отправить к пугоду, а у него стрим stare Post: " + fw)
+
+                if self.tgfwcd:
+                    if 1:
+                        fw = "(New post at forsenCD lki): "
+                        await asyncio.sleep(4)
+                        fw += self.tgfwcd
+                        self.tgfwcd = ""
+                        print(fw)
+                        if not self.USERDATA['notify']['pwgood']['stream']:
+                            if not self.turningOn: await self.more500send(self.get_channel("pwgood"), fw, delay=2)
                         else:
                             if not self.turningOn: await self.more500send(self.get_channel("poal48"), "Хотел отправить к пугоду, а у него стрим stare Post: " + fw)
                     
@@ -2409,7 +2521,7 @@ class Bot(commands.Bot):
             emt = choice(bot.emtsred3x)
             if emt['data']['flags'] == 256: await ctx.send(f"frame145delay007s {emt['name']}")
             else: await ctx.send(f"{emt['name']}")
-        if ctx.channel.name == "orlega_":
+        if ctx.channel.name == "orlega":
             emt = choice(bot.emtsorl)
             if emt['data']['flags'] == 256: await ctx.send(f"frame145delay007s {emt['name']}")
             else: await ctx.send(f"{emt['name']}")
@@ -2423,6 +2535,18 @@ class Bot(commands.Bot):
             else: await ctx.send(f"{emt['name']}")
         if ctx.channel.name == "erynga":
             emt = choice(bot.emtserynga)
+            if emt['data']['flags'] == 256: await ctx.send(f"frame145delay007s {emt['name']}")
+            else: await ctx.send(f"{emt['name']}")
+        if ctx.channel.name == "spazmmmm":
+            emt = choice(bot.emtsspazm)
+            if emt['data']['flags'] == 256: await ctx.send(f"frame145delay007s {emt['name']}")
+            else: await ctx.send(f"{emt['name']}")
+        if ctx.channel.name == "avacuoss":
+            emt = choice(bot.emtsavacus)
+            if emt['data']['flags'] == 256: await ctx.send(f"frame145delay007s {emt['name']}")
+            else: await ctx.send(f"{emt['name']}")
+        if ctx.channel.name == "scarrow227":
+            emt = choice(bot.emtsscr)
             if emt['data']['flags'] == 256: await ctx.send(f"frame145delay007s {emt['name']}")
             else: await ctx.send(f"{emt['name']}")
 
@@ -2447,14 +2571,32 @@ class Bot(commands.Bot):
             self.emtswand = req.get("https://7tv.io/v3/emote-sets/631db3cc4f3e0f1fc59fa8d9").json()['emotes']
             self.emtsecho = req.get("https://7tv.io/v3/emote-sets/647ef56b28b72684e122574c").json()['emotes']
             self.emtserynga = req.get("https://7tv.io/v3/emote-sets/64a2c96712c2ceffb1120915").json()['emotes']
+            self.emtsspazm = req.get("https://7tv.io/v3/emote-sets/62fa4af4aeaec3fa3d52561b").json()['emotes']
+            self.emtsavacus = req.get("https://7tv.io/v3/emote-sets/64ee47a7917b802c9c5aedaf").json()['emotes']
+            self.emtsscr = req.get("https://7tv.io/v3/emote-sets/61f7db4d4f8c353cf9fc2cfb").json()['emotes']
             print("\nEmotes loaded!\n")
-            resp = req.get("https://7tv.io/v3/emote-sets/61c802080bf6300371940381").json()
+            resp = req.get("https://7tv.io/v3/emote-sets/61c802080bf6300371940381").json() #pwgood's emotes
             for i in range(len(resp['emotes'])):
                 if resp['emotes'][i]['name'] in self.USERDATA['pwemts'].keys(): pass
                 else:
                     self.USERDATA['pwemts'][resp['emotes'][i]['name']] = {'id': resp['emotes'][i]['id'], 'used': 0, 'pause': False}
-            self.saveUserData()
-            print("\nPWGood 7tv emotes loaded!\n")
+            allemts = []
+            for i in range(len(resp['emotes'])): allemts.append(resp['emotes'][i]['name'])
+            resp = req.get("https://7tv.io/v3/emote-sets/62cdd34e72a832540de95857").json() #7tv globals emotes
+            for i in range(len(resp['emotes'])):
+                if resp['emotes'][i]['name'] in self.USERDATA['pwemts'].keys(): pass
+                else:
+                    self.USERDATA['pwemts'][resp['emotes'][i]['name']] = {'id': resp['emotes'][i]['id'], 'used': 0, 'pause': False}
+            for i in range(len(resp['emotes'])): allemts.append(resp['emotes'][i]['name'])
+            for i in self.USERDATA['pwemts'].keys():
+                if not i in allemts and not self.USERDATA['pwemts'][i]['pause']:
+                    self.USERDATA['pwemts'][i]['pause'] = True
+                    await self.get_channel("poal48").send(f"Эмоут {i} поставлен на паузу PauseChamp")
+                if i in allemts and self.USERDATA['pwemts'][i]['pause']:
+                    self.USERDATA['pwemts'][i]['pause'] = False
+                    await self.get_channel("poal48").send(f"Эмоут {i} снят с паузы ❌   PauseChamp")
+                self.saveUserData()
+                print("\nPWGood 7tv emotes loaded!\n")
             await ctx.send("Эмоуты обновлены! Zaebok")
 
     @commands.command(name="execute", aliases=["exec"])
@@ -2761,14 +2903,14 @@ class Bot(commands.Bot):
                 self.USERDATA['red3x']['massping'].append(ctx.author.display_name)
                 self.saveUserData()
                 await ctx.reply("Записал тебя в списочек на масс тык! essaying ")
-        if ctx.channel.name == "orlega_":
-            if ctx.author.display_name in self.USERDATA['orlega_']['massping']:
+        if ctx.channel.name == "orlega":
+            if ctx.author.display_name in self.USERDATA['orlega']['massping']:
                 #await ctx.reply("Ты уже с списочке на масс тык! uuh ")
-                self.USERDATA['orlega_']['massping'].remove(ctx.author.display_name)
+                self.USERDATA['orlega']['massping'].remove(ctx.author.display_name)
                 self.saveUserData()
                 await ctx.reply("Ты отписался от масс тыка yaderka ")
             else:
-                self.USERDATA['orlega_']['massping'].append(ctx.author.display_name)
+                self.USERDATA['orlega']['massping'].append(ctx.author.display_name)
                 self.saveUserData()
                 await ctx.reply("Записал тебя в списочек на масс тык! pwgoodG ")
         if ctx.channel.name == "wanderning_":
@@ -2791,6 +2933,36 @@ class Bot(commands.Bot):
                 self.USERDATA['echo']['massping'].append(ctx.author.display_name)
                 self.saveUserData()
                 await ctx.reply("Записал тебя в списочек на масс тык! catBombing ")
+        if ctx.channel.name == "spazmmmm":
+            if ctx.author.display_name in self.USERDATA['spazmmmm']['massping']:
+                #await ctx.reply("Ты уже с списочке на масс тык! uuh ")
+                self.USERDATA['spazmmmm']['massping'].remove(ctx.author.display_name)
+                self.saveUserData()
+                await ctx.reply("Ты отписался от масс тыка catsHonestReaction ")
+            else:
+                self.USERDATA['spazmmmm']['massping'].append(ctx.author.display_name)
+                self.saveUserData()
+                await ctx.reply("Записал тебя в списочек на масс тык! zaebis ") 
+        if ctx.channel.name == "avacuoss":
+            if ctx.author.display_name in self.USERDATA['avacuoss']['massping']:
+                #await ctx.reply("Ты уже с списочке на масс тык! uuh ")
+                self.USERDATA['avacuoss']['massping'].remove(ctx.author.display_name)
+                self.saveUserData()
+                await ctx.reply("Ты отписался от масс тыка NIGDE ")
+            else:
+                self.USERDATA['avacuoss']['massping'].append(ctx.author.display_name)
+                self.saveUserData()
+                await ctx.reply("Записал тебя в списочек на масс тык! cheso ") 
+        if ctx.channel.name == "scarrow227":
+            if ctx.author.display_name in self.USERDATA['scarrow227']['massping']:
+                #await ctx.reply("Ты уже с списочке на масс тык! uuh ")
+                self.USERDATA['scarrow227']['massping'].remove(ctx.author.display_name)
+                self.saveUserData()
+                await ctx.reply("Ты отписался от масс тыка Pomidor ")
+            else:
+                self.USERDATA['scarrow227']['massping'].append(ctx.author.display_name)
+                self.saveUserData()
+                await ctx.reply("Записал тебя в списочек на масс тык! MONKEYINAWATERMELONTRAINWTFTHISISCRAZY ") 
 
     @commands.command(name="masspingedit")
     async def masspingedit(self, ctx: commands.Context):
@@ -2817,12 +2989,18 @@ class Bot(commands.Bot):
             chnl = "tatt04ek"
         if (ctx.author.name == "poal48" or ctx.author.name == "red3xtop") and ctx.channel.name == "red3xtop":
             chnl = "red3x"
-        if (ctx.author.name == "poal48" or ctx.author.name == "orlega_") and ctx.channel.name == "orlega_":
-            chnl = "orlega_"
+        if (ctx.author.name == "poal48" or ctx.author.name == "orlega") and ctx.channel.name == "orlega":
+            chnl = "orlega"
         if (ctx.author.name == "poal48" or ctx.author.name == "wanderning_") and ctx.channel.name == "wanderning_":
             chnl = "wanderning_"
         if (ctx.author.name == "poal48" or ctx.author.name == "echoinshade") and ctx.channel.name == "echoinshade":
             chnl = "echo"
+        if (ctx.author.name == "poal48" or ctx.author.name == "spazmmmm") and ctx.channel.name == "spazmmmmm":
+            chnl = "spazmmmm"
+        if (ctx.author.name == "poal48" or ctx.author.name == "avacuoss") and ctx.channel.name == "avacuoss":
+            chnl = "avacuoss"
+        if (ctx.author.name == "poal48" or ctx.author.name == "scarrow227") and ctx.channel.name == "scarrow227":
+            chnl = "scarrow227"
         if chnl:
             cnt = str0list0split(ctx.message.content, listcut=(0, 0))
             if cnt.list[0] == "add":
@@ -2858,12 +3036,18 @@ class Bot(commands.Bot):
             await self.more500send(ctx, " ".join(self.USERDATA['tatt04ek']['massping']), start="plink", end = "plonk")
         if (ctx.author.name == "poal48" or ctx.author.name == "red3xtop") and ctx.channel.name == "red3xtop":
             await self.more500send(ctx, " ".join(self.USERDATA['red3x']['massping']), start="cat3", end = "cat3")
-        if (ctx.author.name == "poal48" or ctx.author.name == "orlega_") and ctx.channel.name == "orlega_":
-            await self.more500send(ctx, " ".join(self.USERDATA['orlega_']['massping']), start="stare", end = "stare")
+        if (ctx.author.name == "poal48" or ctx.author.name == "orlega") and ctx.channel.name == "orlega":
+            await self.more500send(ctx, " ".join(self.USERDATA['orlega']['massping']), start="stare", end = "stare")
         if (ctx.author.name == "poal48" or ctx.author.name == "wanderning_") and ctx.channel.name == "wanderning_":
             await self.more500send(ctx, " ".join(self.USERDATA['wanderning_']['massping']), start="Zaebok", end = "Zaebok")
         if (ctx.author.name == "poal48" or ctx.author.name == "echoinshade") and ctx.channel.name == "echoinshade":
             await self.more500send(ctx, " ".join(self.USERDATA['echo']['massping']), start="catBombing", end = "catBombing")
+        if (ctx.author.name == "poal48" or ctx.author.name == "spazmmmm") and ctx.channel.name == "spazmmmm":
+            await self.more500send(ctx, " ".join(self.USERDATA['spazmmmm']['massping']), "spazmmmm", "spazmmmm")
+        if (ctx.author.name == "poal48" or ctx.author.name == "avacuoss") and ctx.channel.name == "avacuoss":
+            await self.more500send(ctx, " ".join(self.USERDATA['avacuoss']['massping']), "Zevaka", "Zevaka")
+        if (ctx.author.name == "poal48" or ctx.author.name == "scarrow227") and ctx.channel.name == "scarrow227":
+            await self.more500send(ctx, " ".join(self.USERDATA['scarrow227']['massping']), "buh", "buh")
 
     def saveUserData(self):
         THIS = cdcs.open("USERDATA.data", 'w', 'utf-8')
@@ -2946,7 +3130,7 @@ class Bot(commands.Bot):
 
     @commands.command(name="sr", aliases=["songrequest", "ср"])
     async def sr(self, ctx: commands.Context):
-        if ctx.channel.name == "poal48" or ctx.channel.name == "enihei" or ctx.channel.name == "tatt04ek" or ctx.channel.name == "shadowdemonhd_" or ctx.channel.name == "orlega_":
+        if ctx.channel.name == "poal48" or ctx.channel.name == "enihei" or ctx.channel.name == "tatt04ek" or ctx.channel.name == "shadowdemonhd_" or ctx.channel.name == "orlega" or ctx.channel.name == "spazmmmm" or ctx.channel.name == "scarrow227":
             who = ctx.channel.name
             if not self.USERDATA['spotify'][who]['sr']['enabled']:
                 await ctx.reply("Сонг реквесты выключены сейчас pwgoodDespair")
@@ -3013,7 +3197,91 @@ class Bot(commands.Bot):
 
     @commands.command(name="csr")
     async def csr(self, ctx: commands.Context):
-        if ctx.channel.name == "poal48" or ctx.channel.name == "enihei" or ctx.channel.name == "tatt04ek" or ctx.channel.name == "shadowdemonhd_" or ctx.channel.name == "orlega_":
+        if ctx.channel.name == "poal48" or ctx.channel.name == "enihei" or ctx.channel.name == "tatt04ek" or ctx.channel.name == "shadowdemonhd_" or ctx.channel.name == "orlega" or ctx.channel.name == "spazmmmm" or ctx.channel.name == "scarrow227":
+            who = ctx.channel.name
+            cnsl = "None"
+            for i in range(len(self.USERDATA['spotify'][who]['sr']['songs'])):
+                if self.USERDATA['spotify'][who]['sr']['songs'][i]['by'] == ctx.author.display_name:
+                    cnsl = self.USERDATA['spotify'][who]['sr']['songs'][i]
+            if cnsl == "None":
+                await ctx.reply("Не нашел ни одного твоего трека в сонг реквестах")
+                return
+            req.delete(f"https://api.spotify.com/v1/playlists/{self.USERDATA['spotify'][who]['sr']['id']}/tracks", json={\
+                       'tracks': [{'uri': cnsl['uri']}]}, headers={\
+                        'Authorization': f"Bearer {self.sp_data[who]['access']}", \
+                        'Content-Type': "application/json"}).json()
+            self.USERDATA['spotify'][who]['sr']['songs'].remove(cnsl)
+            await ctx.reply(f"Успешно удалил {cnsl['name']} - {cnsl['artist']} из сонг реквестов")
+
+    async def sr_next(self, chnl: tio.Channel, rew: tio.CustomRewardRedemption):
+        if chnl.name == "poal48" or chnl.name == "enihei" or chnl.name == "tatt04ek" or chnl.name == "shadowdemonhd_" or chnl.name == "orlega" or chnl.name == "spazmmmm" or chnl.name == "scarrow227":
+            who = chnl.name
+            if not self.USERDATA['spotify'][who]['sr']['enabled']:
+                await chnl.send("Сонг реквесты выключены сейчас pwgoodDespair")
+                await rew.refund(self.sp_data[who]['twitch'])
+                return
+            if self.USERDATA['spotify'][who]['sr']['id'] == "None":
+                await chnl.send("Стример не установил плей-лист для сров, скажи ему об этом!")
+                await rew.refund(self.sp_data[who]['twitch'])
+                return
+            self.updateSpotifySongs(who)
+            content = str0list0split(rew.input)
+            skipSearch = False
+            for i in range(len(content.list)):
+                if "youtube.com/watch" in content.list[i] or "youtu.be/" in content.list[i]:
+                    #await ctx.reply("Мы пока не принимает ссылки с ютуба, введи название трека или прямую ссылку на \"open.spotify.com/123\"")
+                    #return
+                    skipSearch = True
+                    slResp = req.get("https://api.song.link/v1-alpha.1/links", params={\
+                        'url': content.list[i]}).json()
+                    try:
+                        trackId = slResp['linksByPlatform']['spotify']['nativeAppUriDesktop'].split(':')[2]
+                        resp = req.get(f"https://api.spotify.com/v1/tracks/{trackId}", headers={\
+                            'Authorization': f"Bearer {self.sp_data[who]['access']}", \
+                            'Content-Type': "application/json"}).json()
+                        track = resp
+                    except KeyError:
+                        await chnl.send(f"Не нашли такую же песню на spotify uuh")
+                        await rew.refund(self.sp_data[who]['twitch'])
+                        return
+                if "https://open.spotify.com/track/" in content.list[i]:
+                    skipSearch = True
+                    trackId = content.list[i].split("https://open.spotify.com/track/")[1]
+                    trackId = trackId.split("?si")[0]
+                    resp = req.get(f"https://api.spotify.com/v1/tracks/{trackId}", headers={\
+                        'Authorization': f"Bearer {self.sp_data[who]['access']}", \
+                        'Content-Type': "application/json"}).json()
+                    track = resp
+            if not skipSearch:
+                await chnl.send("Принимаем только ссылки на награде за баллы")
+                await rew.refund(self.sp_data[who]['twitch'])
+                return
+            ex = ""
+            if track['explicit']: ex += f" (Этот трек с пометкой E, будь осторожен {chnl.name} )"
+            resp = req.get(f"https://api.spotify.com/v1/playlists/{self.USERDATA['spotify'][who]['sr']['id']}", headers={\
+                'Authorization': f"Bearer {self.sp_data[who]['access']}", \
+                'Content-Type': "application/json"}).json()
+            for i in range(len(resp['tracks']['items'])):
+                if track['uri'] == resp['tracks']['items'][i]['track']['uri']:
+                    await chnl.send("Этот трек уже есть в очереди!")
+                    await rew.refund(self.sp_data[who]['twitch'])
+                    return
+            pos = 1 #resp['tracks']['total']
+            resp = req.post(f"https://api.spotify.com/v1/playlists/{self.USERDATA['spotify'][who]['sr']['id']}/tracks", params={\
+                'position': pos,\
+                'uris': track['uri']}, headers={\
+                'Authorization': f"Bearer {self.sp_data[who]['access']}", \
+                'Content-Type': "application/json"})
+            self.USERDATA['spotify'][who]['sr']['songs'].insert(1, {\
+                'name': track['name'], 'artist': track['artists'][0]['name'], \
+                'uri': track['uri'], 'by': rew.user_name})
+            self.saveUserData()
+            await rew.fulfill(self.sp_data[who]['twitch'])
+            await chnl.send(f"Трек {track['name']} - {track['artists'][0]['name']} успешно встал в очередь в позиции {pos+1}, напиши *csr если он неверен!" + ex)
+
+    @commands.command(name="csr")
+    async def csr(self, ctx: commands.Context):
+        if ctx.channel.name == "poal48" or ctx.channel.name == "enihei" or ctx.channel.name == "tatt04ek" or ctx.channel.name == "shadowdemonhd_" or ctx.channel.name == "orlega" or ctx.channel.name == "spazmmmm" or ctx.channel.name == "scarrow227":
             who = ctx.channel.name
             cnsl = "None"
             for i in range(len(self.USERDATA['spotify'][who]['sr']['songs'])):
@@ -3031,7 +3299,7 @@ class Bot(commands.Bot):
 
     @commands.command(name="usr")
     async def updatesr(self, ctx: commands.Context):
-        if (ctx.author.name == "poal48") or (ctx.author.name == "enihei" and ctx.channel.name == "enihei") or (ctx.author.name == "tatt04ek" and ctx.channel.name == "tatt04ek") or (ctx.author.name == "shadowdemonhd_" and ctx.channel.name == "shadowdemonhd_") or (ctx.channel.name == "orlega_" and ctx.channel.name == "orlega_"):
+        if (ctx.author.name == "poal48") or (ctx.author.name == "enihei" and ctx.channel.name == "enihei") or (ctx.author.name == "tatt04ek" and ctx.channel.name == "tatt04ek") or (ctx.author.name == "shadowdemonhd_" and ctx.channel.name == "shadowdemonhd_") or (ctx.author.name == "orlega" and ctx.channel.name == "orlega") or (ctx.author.name == "spazmmmm" and ctx.channel.name == "spazmmmm") or (ctx.author.name == "scarrow227" and ctx.channel.name == "scarrow227"):
             who = ctx.channel.name
             tracks = req.get(f"https://api.spotify.com/v1/playlists/{self.USERDATA['spotify'][who]['sr']['id']}", headers={\
                 'Authorization': f"Bearer {self.sp_data[who]['access']}", \
@@ -3049,7 +3317,7 @@ class Bot(commands.Bot):
 
     @commands.command(name="clrsr")
     async def clrsr(self, ctx: commands.Context):
-        if (ctx.author.name == "poal48") or (ctx.author.name == "enihei" and ctx.channel.name == "enihei") or (ctx.author.name == "tatt04ek" and ctx.channel.name == "tatt04ek") or (ctx.author.name == "shadowdemonhd_" and ctx.channel.name == "shadowdemonhd_") or (ctx.channel.name == "orlega_" and ctx.channel.name == "orlega_"):
+        if (ctx.author.name == "poal48") or (ctx.author.name == "enihei" and ctx.channel.name == "enihei") or (ctx.author.name == "tatt04ek" and ctx.channel.name == "tatt04ek") or (ctx.author.name == "shadowdemonhd_" and ctx.channel.name == "shadowdemonhd_") or (ctx.author.name == "orlega" and ctx.channel.name == "orlega") or (ctx.author.name == "spazmmmm" and ctx.channel.name == "spazmmmm") or (ctx.author.name == "scarrow227" and ctx.channel.name == "scarrow227"):
             who = ctx.channel.name
             tracks = req.get(f"https://api.spotify.com/v1/playlists/{self.USERDATA['spotify'][who]['sr']['id']}", headers={\
                 'Authorization': f"Bearer {self.sp_data[who]['access']}", \
@@ -3066,7 +3334,7 @@ class Bot(commands.Bot):
 
     @commands.command(name="srturn")
     async def srturn(self, ctx: commands.Context):
-        if (ctx.author.name == "poal48") or (ctx.author.name == "enihei" and ctx.channel.name == "enihei") or (ctx.author.name == "tatt04ek" and ctx.channel.name == "tatt04ek") or (ctx.author.name == "shadowdemonhd_" and ctx.channel.name == "shadowdemonhd_") or (ctx.channel.name == "orlega_" and ctx.channel.name == "orlega_"):
+        if (ctx.author.name == "poal48") or (ctx.author.name == "enihei" and ctx.channel.name == "enihei") or (ctx.author.name == "tatt04ek" and ctx.channel.name == "tatt04ek") or (ctx.author.name == "shadowdemonhd_" and ctx.channel.name == "shadowdemonhd_") or (ctx.author.name == "orlega" and ctx.channel.name == "orlega") or (ctx.author.name == "spazmmmm" and ctx.channel.name == "spazmmmm") or (ctx.author.name == "scarrow227" and ctx.channel.name == "scarrow227"):
             who = ctx.channel.name
             cnt = str0list0split(ctx.message.content, listcut=(0,0)).list[0]
             if cnt != "off" and cnt != "on":
@@ -3074,18 +3342,28 @@ class Bot(commands.Bot):
                 return
             if cnt == "off":
                 self.USERDATA['spotify'][who]['sr']['enabled'] = False
+                if self.USERDATA['spotify'][who]['balls']:
+                    pu = self.create_user(self.USERDATA['spotify'][who]['user_id'], who)
+                    rews = await pu.get_custom_rewards(self.sp_data[who]['twitch'], ids=[self.USERDATA['spotify'][who]['balls']], force=True)
+                    rew = rews[0]
+                    await rew.edit(self.sp_data[who]['twitch'], enabled=False)                    
                 await ctx.send("Сонг реквесты выключены!")
             if cnt == "on":
                 if self.USERDATA['spotify'][who]['sr']['id'] == "None":
                     await ctx.reply("У тебя не установлен плей-лист для сров. Установи его с помощью *srset <Ссылка>")
                     return
                 self.USERDATA['spotify'][who]['sr']['enabled'] = True
+                if self.USERDATA['spotify'][who]['balls']:
+                    pu = self.create_user(self.USERDATA['spotify'][who]['user_id'], who)
+                    rews = await pu.get_custom_rewards(self.sp_data[who]['twitch'], ids=[self.USERDATA['spotify'][who]['balls']], force=True)
+                    rew = rews[0]
+                    await rew.edit(self.sp_data[who]['twitch'], enabled=True)      
                 await ctx.send("Сонг реквесты включены!")
             self.saveUserData()
 
     @commands.command(name="srset")
     async def srset(self, ctx: commands.Context):
-        if (ctx.author.name == "poal48") or (ctx.author.name == "enihei" and ctx.channel.name == "enihei") or (ctx.author.name == "tatt04ek" and ctx.channel.name == "tatt04ek") or (ctx.author.name == "shadowdemonhd_" and ctx.channel.name == "shadowdemonhd_") or (ctx.channel.name == "orlega_" and ctx.channel.name == "orlega_"):
+        if (ctx.author.name == "poal48") or (ctx.author.name == "enihei" and ctx.channel.name == "enihei") or (ctx.author.name == "tatt04ek" and ctx.channel.name == "tatt04ek") or (ctx.author.name == "shadowdemonhd_" and ctx.channel.name == "shadowdemonhd_") or (ctx.channel.name == "orlega" and ctx.channel.name == "orlega") or (ctx.author.name == "spazmmmmm" and ctx.channel.name == "spazmmmm") or (ctx.author.name == "scarrow227" and ctx.channel.name == "scarrow227"):
             who = ctx.channel.name
             cnt = str0list0split(ctx.message.content, listcut=(0, 0)).list[0]
             plstId = cnt.split("https://open.spotify.com/playlist/")[1]
@@ -3124,7 +3402,7 @@ class Bot(commands.Bot):
 
     @commands.command(name="song", aliases=["сонг", "песня"])
     async def song(self, ctx: commands.Context):
-        if ctx.channel.name == "poal48" or ctx.channel.name == "enihei" or ctx.channel.name == "tatt04ek" or ctx.channel.name == "shadowdemonhd_" or ctx.channel.name == "orlega_":
+        if ctx.channel.name == "poal48" or ctx.channel.name == "enihei" or ctx.channel.name == "tatt04ek" or ctx.channel.name == "shadowdemonhd_" or ctx.channel.name == "orlega" or ctx.channel.name == "spazmmmm" or ctx.channel.name == "scarrow227":
             who = ctx.channel.name
             if self.USERDATA['spotify'][who]['sr']['enabled']: self.updateSpotifySongs(who)
             try:
@@ -3142,9 +3420,9 @@ class Bot(commands.Bot):
                 else:
                     await ctx.reply("Произошла непридвиденая ошибка или музыка не играет! Попробуй позже!")
 
-    @commands.command(name="songlist", aliases=["сонглист"])
+    @commands.command(name="songlist", aliases=["сонглист", "srlist", "srs"])
     async def songlist(self, ctx: commands.Context):
-        if ctx.channel.name == "poal48" or ctx.channel.name == "enihei" or ctx.channel.name == "tatt04ek" or ctx.channel.name == "shadowdemonhd_" or ctx.channel.name == "orlega_":
+        if ctx.channel.name == "poal48" or ctx.channel.name == "enihei" or ctx.channel.name == "tatt04ek" or ctx.channel.name == "shadowdemonhd_" or ctx.channel.name == "orlega" or ctx.channel.name == "spazmmmm" or ctx.channel.name == "scarrow227":
             who = ctx.channel.name
             if not self.USERDATA['spotify'][who]['sr']['id']:
                 await ctx.send("Стример не установил плей лист для сров")
@@ -3421,17 +3699,17 @@ class Bot(commands.Bot):
             if self.USERDATA['pwemts'][cnt]['pause']: pauseText = ", эмоут на паузе"
             await ctx.reply(f"{cnt} used times: {self.USERDATA['pwemts'][cnt]['used']}, место в топе: {a}/{len(self.USERDATA['pwemts'].keys())}{pauseText}")
 
-    @commands.command(name="server", aliases=["сервер"])
+    '''@commands.command(name="server", aliases=["сервер"])
     async def server(self, ctx: commands.Context):
-        #if ctx.channel.name == "poal48" or ctx.channel.name == "the_il_" or ctx.channel.name == "enihei" or ctx.channel.name == "shadowdemonhd_" or ctx.channel.name == "tatt04ek" or ctx.channel.name == "red3xtop" or ctx.channel.name == "orlega_" or ctx.channel.name == "wanderning_":
+        #if ctx.channel.name == "poal48" or ctx.channel.name == "the_il_" or ctx.channel.name == "enihei" or ctx.channel.name == "shadowdemonhd_" or ctx.channel.name == "tatt04ek" or ctx.channel.name == "red3xtop" or ctx.channel.name == "orlega" or ctx.channel.name == "wanderning_":
             #await ctx.reply("Приватный лицензионый сервер ПепеЛенд: pepeland.net ")
         if ctx.channel.name == "poal48" or ctx.channel.name == "the_il_" or ctx.channel.name == "enihei" or ctx.channel.name == "shadowdemonhd_" or ctx.channel.name == "tatt04ek" or ctx.channel.name == "red3xtop":
-            await ctx.reply("Лицензионый сервер пепехаба, проходку можно купить за баллы канала у любого пепехабовца с компаньонкой, IP: pepehub.joinserver.xyz")
+            await ctx.reply("Лицензионый сервер пепехаба, проходку можно купить за баллы канала у любого пепехабовца с компаньонкой, IP: pepehub.joinserver.xyz")'''
             
     @commands.command(name="pepehub", aliases=["pph", "пепехаб", "ппх"])
     async def pepehub(self, ctx: commands.Context):
-        if ctx.channel.name == "poal48" or ctx.channel.name == "the_il_" or ctx.channel.name == "enihei" or ctx.channel.name == "shadowdemonhd_" or ctx.channel.name == "tatt04ek" or ctx.channel.name == "red3xtop":
-            await ctx.reply("Наше сообщество ребят с Пепеленда, дискорд: http://денис.space/ппх")
+        if ctx.channel.name == "poal48" or ctx.channel.name == "the_il_" or ctx.channel.name == "enihei" or ctx.channel.name == "shadowdemonhd_" or ctx.channel.name == "tatt04ek" or ctx.channel.name == "red3xtop" or ctx.channel.name == "spazmmmm":
+            await ctx.reply("Наше сообщество ребят с Пепеленда, дискорд: https://discord.gg/pepehub")
             
     def cd_ticker(self):
         sleep(300)
@@ -3582,7 +3860,7 @@ class Bot(commands.Bot):
 
     @commands.command(name="rr")
     async def rr(self, ctx: commands.Context):
-        activeChannels = ["poal48", "tatt04ek", "the_il_", "enihei", "alexoff35", "shadowdemonhd_", "red3xtop", "orlega_", "wanderning_", "echoinshade"]
+        activeChannels = ["poal48", "tatt04ek", "the_il_", "enihei", "alexoff35", "shadowdemonhd_", "red3xtop", "orlega", "wanderning_", "echoinshade"]
         if ctx.channel.name in activeChannels:
             if randint(0, 1):
                 chnlUser = await ctx.channel.user(force=True)
@@ -3597,13 +3875,13 @@ class Bot(commands.Bot):
 
     @commands.command(name="help", aliases=["commands", "хелп"])
     async def help(self, ctx: commands.Context):
-        if ctx.channel.name == "pwgood": await ctx.reply("Список команд доступен здесь: https://денис.space/ppSpin/команды/pwgood/")
-        else: await ctx.reply("Список команд доступен здесь: https://денис.space/ppSpin/команды/")
+        if ctx.channel.name == "pwgood": await ctx.reply("Список команд доступен здесь: poal48.ru/ppSpin/команды/pwgood")
+        else: await ctx.reply("Список команд доступен здесь: poal48.ru/ppSpin/команды")
 
     @commands.command(name="cmd")
     async def cmd(self, ctx: commands.Context):
-        enabled_channels=["poal48", "tatt04ek", "the_il_", "enihei", "shadowdemonhd_", "red3xtop", "erynga", "orlega_", "wanderning_",
-                          "echoinshade", "alexoff35"]
+        enabled_channels=["poal48", "tatt04ek", "the_il_", "enihei", "shadowdemonhd_", "red3xtop", "erynga", "orlega", "wanderning_",
+                          "echoinshade", "alexoff35", "spazmmmm", "avacuoss"]
         if ctx.channel.name in enabled_channels and (ctx.author.name == "poal48" or ctx.author.name == ctx.channel.name):
             cnt = str0list0split(ctx.message.content, listcut=(0, 0))
             try: cnt.list[0]
@@ -3630,16 +3908,22 @@ class Bot(commands.Bot):
                         for l in range(len(cnt.list[i+1])):
                             prefix.append(cnt.list[i+1][l])
                         cnt.listcut(i, i+1)
-                is_reply = False
+                ats = []
                 if "-reply" in cnt.list:
-                    is_reply = True
+                    ats.append("reply")
                     cnt.listcut(cnt.list.index("-reply"), cnt.list.index("-reply"))
+                if "-no-prefix" in cnt.list:
+                    ats.append("no prefix")
+                    cnt.listcut(cnt.list.index("-no-prefix"), cnt.list.index("-no-prefix"))
+                if "-trigger" in cnt.list:
+                    ats.append("trigger")
+                    cnt.listcut(cnt.list.index("-trigger"), cnt.list.index("-trigger"))
                 if not cnt.str:
                     await ctx.reply("Не приведен вывод команды")
                     return
                 if not ctx.channel.name in self.USERDATA['cmd'].keys():
                     self.USERDATA['cmd'][ctx.channel.name] = {}
-                self.USERDATA['cmd'][ctx.channel.name][name] = {"prefix": prefix, "cmd": cnt.str, "is_reply": is_reply, "is_alias": False, "aliases": [], "original_name": None}
+                self.USERDATA['cmd'][ctx.channel.name][name] = {"prefix": prefix, "cmd": cnt.str, "is_alias": False, "aliases": [], "original_name": None, "attributes": ats}
                 self.saveUserData()
                 await ctx.reply(f"Команда {name} добавлена! poal48Arbuz ")
             elif cnt.list[0] == "remove":
@@ -3686,19 +3970,114 @@ class Bot(commands.Bot):
                         for l in range(len(cnt.list[i+1])):
                             prefix.append(cnt.list[i+1][l])
                         cnt.listcut(i, i+1)
-                is_reply = False
+                ats = cmd['attributes']
+                try: ats.remove("reply")
+                except Exception: pass
+                try: ats.remove("no prefix")
+                except Exception: pass
                 if "-reply" in cnt.list:
-                    is_reply = True
+                    ats.append("reply")
                     cnt.listcut(cnt.list.index("-reply"), cnt.list.index("-reply"))
+                if "-no-prefix" in cnt.list:
+                    ats.append("no prefix")
+                    cnt.listcut(cnt.list.index("-no-prefix"), cnt.list.index("-no-prefix"))
+                if "-trigger" in cnt.list:
+                    ats.append("trigger")
+                    cnt.listcut(cnt.list.index("-trigger"), cnt.list.index("-trigger"))
                 if not cnt.str:
                     await ctx.reply("Не приведен вывод команды")
                     return
                 for i in self.USERDATA['cmd'][ctx.channel.name][name]['aliases']:
                     alCmd = self.USERDATA['cmd'][ctx.channel.name][i].copy()                    
-                    self.USERDATA['cmd'][ctx.channel.name][i] = {"prefix": prefix, "cmd": cnt.str, "is_reply": is_reply, "is_alias": alCmd['is_alias'], "aliases": alCmd['aliases'], "original_name": alCmd['original_name']}
-                self.USERDATA['cmd'][ctx.channel.name][name] = {"prefix": prefix, "cmd": cnt.str, "is_reply": is_reply, "is_alias": cmd['is_alias'], "aliases": cmd['aliases'], "original_name": cmd['original_name']}
+                    self.USERDATA['cmd'][ctx.channel.name][i] = {"prefix": prefix, "cmd": cnt.str, "is_alias": alCmd['is_alias'], "aliases": alCmd['aliases'], "original_name": alCmd['original_name'], "attributes": ats}
+                self.USERDATA['cmd'][ctx.channel.name][name] = {"prefix": prefix, "cmd": cnt.str, "is_alias": cmd['is_alias'], "aliases": cmd['aliases'], "original_name": cmd['original_name'], "attributes": ats}
                 self.saveUserData()
                 await ctx.reply(f"Команда {name} изменена! poal48Arbuz ")
+            elif cnt.list[0] == "list":
+                if not ctx.channel.name in self.USERDATA['cmd'].keys():
+                    await ctx.reply("У тебя нет ни одной команды")
+                    return
+                cmds = []
+                for i in self.USERDATA['cmd'][ctx.channel.name].keys():
+                    if not self.USERDATA['cmd'][ctx.channel.name][i]['is_alias']: cmds.append(i)
+                await self.more500send(ctx, "Список твоих команд: " + ", ".join(cmds))
+            elif cnt.list[0] == "show": 
+                if not ctx.channel.name in self.USERDATA['cmd'].keys():
+                    await ctx.reply("У тебя нет ни одной команды")
+                    return
+                try: name = cnt.list[1]
+                except IndexError:
+                    await ctx.reply("Не приведено название команды")
+                    return
+                if not name in self.USERDATA['cmd'][ctx.channel.name]:
+                    await ctx.reply("У тебя нет такой команды")
+                    return
+                cmd = self.USERDATA['cmd'][ctx.channel.name][name]
+                await self.more500send(ctx, f"Команда {name} имеет такое значение: {cmd['cmd']} Имеет {len(cmd['aliases'])} алиасов. Префиксы: {', '.join(cmd['prefix'])} Аттрибуты: {', '.join(cmd['attributes'])}")
+            elif cnt.list[0].lower() == "yoink" or cnt.list[0] == "copy":
+                try: chnl = cnt.list[1].lower()
+                except IndexError:
+                    await ctx.reply("Не приведено название канала для йонька")
+                    return
+                try: name = cnt.list[2]
+                except IndexError:
+                    await ctx.reply("Не приведено название команды")
+                    return
+                if not chnl in self.USERDATA['cmd'].keys():
+                    await ctx.reply("У этого канала нету команд, или его не существует")
+                    return
+                if not name in self.USERDATA['cmd'][chnl].keys():
+                    await ctx.reply("У этого канала нету такой команды!")
+                    return
+                if self.USERDATA['cmd'][chnl][name]['is_alias']:
+                    await ctx.reply(f"Ты пытаешься скопировать алиас, используй *cmd yoink {chnl} {self.USERDATA['cmd'][chnl][name]['original_name']}")
+                    return
+                if not ctx.channel.name in self.USERDATA['cmd'].keys():
+                    self.USERDATA['cmd'][ctx.channel.name] = {}
+                aliases = False
+                try:
+                    cnt.list[3]
+                    if cnt.list[3] == "-aliases":
+                        aliases = True
+                except IndexError: pass
+                self.USERDATA['cmd'][ctx.channel.name][name] = self.USERDATA['cmd'][chnl][name].copy()
+                if not aliases: self.USERDATA['cmd'][ctx.channel.name][name]['aliases'] = []
+                if aliases:
+                    for i in self.USERDATA['cmd'][chnl][name]['aliases']:
+                        self.USERDATA['cmd'][ctx.channel.name][i] = self.USERDATA['cmd'][chnl][i].copy()
+                self.saveUserData()
+                await ctx.reply(f"Команда {name} скопирована у {chnl}")
+            elif cnt.list[0] == "rename":
+                if not ctx.channel.name in self.USERDATA['cmd'].keys():
+                    await ctx.reply("У тебя нет ни одной команды")
+                    return
+                try: fromName = cnt.list[1]
+                except KeyError:
+                    await ctx.reply("Не приведено название команды")
+                    return
+                try: self.USERDATA['cmd'][ctx.channel.name][fromName]
+                except KeyError:
+                    await ctx.reply("У тебя нет такой команды poal48Arbuz")
+                    return
+                if self.USERDATA['cmd'][ctx.channel.name][fromName]['is_alias']:
+                    await ctx.reply("Ты не можешь переименовать алиас")
+                    return
+                try: toName = cnt.list[2]
+                except KeyError:
+                    await ctx.reply("Не приведено название второй команды")
+                    return
+                try:
+                    self.USERDATA['cmd'][ctx.channel.name][toName]
+                    await ctx.reply("У тебя уже есть команда с таким именем poal48Arbuz")
+                    return
+                except KeyError:
+                    pass
+                self.USERDATA['cmd'][ctx.channel.name][toName] = self.USERDATA['cmd'][ctx.channel.name][fromName]
+                self.USERDATA['cmd'][ctx.channel.name].pop(fromName)
+                for i in range(len(self.USERDATA['cmd'][ctx.channel.name][toName]['aliases'])):
+                    self.USERDATA['cmd'][ctx.channel.name][self.USERDATA['cmd'][ctx.channel.name][toName]['aliases'][i]]['original_name'] = toName
+                self.saveUserData()
+                await ctx.reply(f"Команда {fromName} переименована в {toName}")
             elif cnt.list[0] == "alias":
                 try: cnt.list[1]
                 except IndexError: await ctx.reply("Не хватает саб команд")
@@ -3739,24 +4118,96 @@ class Bot(commands.Bot):
                     self.USERDATA['cmd'][ctx.channel.name].pop(name)
                     self.saveUserData()
                     await ctx.reply(f"Алиас {name} удален")
+                elif cnt.list[1] == "show":
+                    if not ctx.channel.name in self.USERDATA['cmd'].keys():
+                        await ctx.reply("У тебя нет ни одной команды")
+                        return
+                    try: name = cnt.list[2]
+                    except IndexError:
+                        await ctx.reply("Не приведено название команды")
+                        return
+                    if not name in self.USERDATA['cmd'][ctx.channel.name]:
+                        await ctx.reply("У тебя нет такой команды")
+                        return
+                    if self.USERDATA['cmd'][ctx.channel.name][name]['is_alias']: name = self.USERDATA['cmd'][ctx.channel.name][name]['original_name']
+                    cmd = self.USERDATA['cmd'][ctx.channel.name][name]
+                    await self.more500send(ctx, f"Команда {name} имеет такие алиасы: {', '.join(cmd['aliases'])}")
 
+    async def fetch_placeholders(self, cmd: str, msg: tio.Message):
+        cmd = str0list0split(cmd)
+        skipNext = 0
+        for i in range(len(cmd.list)):
+            if skipNext:
+                skipNext -= 1
+                continue
+            if cmd.list[i] == "-author":
+                cmd.list.remove("-author")
+                cmd.list.insert(i, msg.author.display_name)
+                cmd.updateStr()
+            if cmd.list[i] == "-title":
+                cmd.list.remove("-title")
+                user = await msg.channel.user()
+                info = await self.fetch_channel(str(user.id))
+                cmd.list.insert(i, info.title)
+                cmd.updateStr()
+            if cmd.list[i] == "-game":
+                cmd.list.remove("-game")
+                user = await msg.channel.user()
+                info = await self.fetch_channel(str(user.id))
+                cmd.list.insert(i, info.game_name)
+                cmd.updateStr()
+            if cmd.list[i] == "-api":
+                try:
+                    method = cmd.list[i+1]
+                    url = cmd.list[i+2]
+                    data = req.request(method, url).text
+                    cmd.list.remove("-api")
+                    cmd.list.remove(method)
+                    cmd.list.remove(url)
+                    cmd.list.insert(i, data)
+                    cmd.updateStr()
+                    skipNext = 2
+                except IndexError:
+                    cmd.str = "Произошла ошибка при api запросе: параметров слишком мало"
+                    break
+                except Exception as e:
+                    cmd.str = f"Произошла ошибка при api запросе: {e}"
+                    break
+        return cmd.str
 
     async def handle_custom_commands(self, msg: tio.Message):
-        enabled_channels=["poal48", "tatt04ek", "the_il_", "enihei", "shadowdemonhd_", "red3xtop", "erynga", "orlega_", "wanderning_",
-                          "echoinshade", "alexoff35"]
+        enabled_channels=["poal48", "tatt04ek", "the_il_", "enihei", "shadowdemonhd_", "red3xtop", "erynga", "orlega", "wanderning_",
+                          "echoinshade", "alexoff35", "spazmmmm", "avacuoss"]
         if not msg.channel.name in enabled_channels: return
         cnt = msg.content
         if len(cnt) == 1: return
         prefix = cnt[0]
+        full_command = cnt.split()[0]
         cnt = cnt[1:]
         command = cnt.split()[0]
         try:
             cmd = self.USERDATA['cmd'][msg.channel.name][command]
-            if prefix in cmd['prefix']:
-                if not cmd['is_reply']: await commands.Context(msg, self).send(cmd['cmd'])
-                else: await commands.Context(msg, self).reply(cmd['cmd'])
+            if prefix in cmd['prefix'] and not "no prefix" in cmd['attributes']:
+                output = await self.fetch_placeholders(cmd['cmd'], msg)
+                if not "reply" in cmd['attributes']: await self.more500send(commands.Context(msg, self), output)
+                else: await commands.Context(msg, self).reply(output)
         except KeyError: pass
-
+        try:
+            cmd = self.USERDATA['cmd'][msg.channel.name][full_command]
+            if "no prefix" in cmd['attributes']:
+                output = await self.fetch_placeholders(cmd['cmd'], msg)
+                if not "reply" in cmd['attributes']: await self.more500send(commands.Context(msg, self), output)
+                else: await commands.Context(msg, self).reply(output)
+        except KeyError: pass
+        for i in msg.content.split():
+            try:
+                cmd = self.USERDATA['cmd'][msg.channel.name][i]
+                if "trigger" in cmd['attributes']:
+                    output = await self.fetch_placeholders(cmd['cmd'], msg)
+                    if not "reply" in cmd['attributes']: await self.more500send(commands.Context(msg, self), output)
+                    else: await commands.Context(msg, self).reply(output)
+                    return
+            except KeyError: pass
 
     @commands.command(name="announceTo")
     async def announceTo(self, ctx: commands.Context):
@@ -3767,72 +4218,192 @@ class Bot(commands.Bot):
             for i in channels:
                 await self.get_channel(i).send(cnt.str)
             await ctx.send("Анонс отправлен")
+
+    @commands.command(name="srballs")
+    async def srballs(self, ctx: commands.Context):
+        enabled_channels = ["poal48", "tatt04ek", "shadowdemonhd_", "orlega", "spazmmmm", "scarrow227"]
+        if ctx.author.name == ctx.channel.name and ctx.channel.name in enabled_channels:
+            user = self.create_user(ctx.author.id, ctx.author.name)
+            rew = await user.create_custom_reward(self.sp_data[ctx.channel.name]['twitch'], "Измени название награды на другое", cost=10000000, input_required=True, enabled=False)
+            self.USERDATA['spotify'][ctx.channel.name]['balls'] = rew.id
+            self.saveUserData()
+            await ctx.send("Создал награду, поменяй ей название и описание")
+
+    @commands.command(name="todo")
+    async def todo(self, ctx: commands.Context):
+        if ctx.author.name == "poal48":
+            cnt = str0list0split(ctx.message.content, listcut=(0,0))
+            if not cnt.str:
+                await ctx.reply("Нет саб команды")
+                return
+            if cnt.list[0] == "add":
+                cnt = str0list0split(cnt.str, listcut=(0, 0)).str
+                if not cnt:
+                    await ctx.reply("Нет таска")
+                    return
+                req.post(
+                    "https://api.todoist.com/rest/v2/tasks", 
+                    headers = {"Authorization": f"Bearer {todoist_token}", "Content-Type": "application/json"},
+                    params={"project_id": todoist_project_id, "content": cnt}
+                )
+                await ctx.reply("Задача поставлена Stare 👍")
+
+    @commands.command(name="todayiwil", aliases=["какойсегодняпраздник", "праздник", "праздники", "holiday", "todayholiday"])
+    async def todayiwil(self, ctx: commands.Context):
+        html = BS(req.get("https://calend.online/holiday/", headers={'User-Agent': 'Mozilla/5.0'}).content, "html.parser")
+        holidays = []
+        for i in html.select(".holidays-list > li"):
+            if i.find("a"):
+                holidays.append(i.find("a").contents[0].strip())
+            else:
+                holidays.append(i.contents[0])
+        msg = f"SHTO Сегодня празднуют: {', '.join(holidays[:5])}! Не забудь поздравить всех своих родных с праздником!"
+        if len(msg) > 500:
+            msg = f"SHTO Сегодня празднуют: {', '.join(holidays[:3])}! Не забудь поздравить всех своих родных с праздником!"
+        await ctx.reply(msg)
+
+    @commands.command(name="suggest")
+    async def suggest(self, ctx: commands.Context):
+        cnt = str0list0split(ctx.message.content, listcut=(0, 0)).str
+        if not cnt:
+            await ctx.reply("Предложение пустое")
+            return
+        for i in self.USERDATA['suggestions']:
+            if ctx.author.name == i['author'] and i['status'] == "suggested":
+                await ctx.reply("У тебя уже есть активное предложение")
+                return
+        self.USERDATA['suggestions'].append({"id": str(len(self.USERDATA['suggestions'])+1), "suggest": cnt, "status": "suggested", "author": ctx.author.name})
+        self.saveUserData()
+        await ctx.reply("Предложение отправлено. Новое предложение вы сможете отправить после того как расмотрят это.")
+
+    @commands.command(name="suggestions", aliases=['sugs'])
+    async def suggestions(self, ctx: commands.Context):
+        if ctx.author.name == "poal48":
+            cnt = str0list0split(ctx.message.content, listcut=(0, 0))
+            if len(cnt.list) == 0:
+                Suggestions = []
+                for i in self.USERDATA['suggestions']:
+                    if i['status'] == "suggested":
+                        Suggestions.append(i)
+                msg = f"Новые соггенсоны сегодня: "
+                for i in Suggestions:
+                    msg += f"\"{i['suggest']}\" - от {i['author']} id: {i['id']}, "
+                msg = msg[:-2]
+                await self.more500send(ctx, msg)
+            elif cnt.list[0] == "a":
+                try: Id = cnt.list[1]
+                except IndexError:
+                    await ctx.send("yaderka")
+                    return
+                for i in range(len(self.USERDATA['suggestions'])-1, -1, -1):
+                    if Id == self.USERDATA['suggestions'][i]['id']:
+                        self.USERDATA['suggestions'][i]['status'] = "accepted"
+                        self.saveUserData()
+                        req.post(
+                            "https://api.todoist.com/rest/v2/tasks", 
+                            headers = {"Authorization": f"Bearer {todoist_token}", "Content-Type": "application/json"},
+                            params={"project_id": todoist_project_id, "content": self.USERDATA['suggestions'][i]['suggest']}
+                        )
+                        break
+                await ctx.send(f"Идея {Id} принята")
+            elif cnt.list[0] == "d":
+                try: Id = cnt.list[1]
+                except IndexError:
+                    await ctx.send("yaderka")
+                    return
+                for i in range(len(self.USERDATA['suggestions'])-1, -1, -1):
+                    if Id == self.USERDATA['suggestions'][i]['id']:
+                        self.USERDATA['suggestions'][i]['status'] = "denied"
+                        self.saveUserData()
+                        break
+                await ctx.send(f"Идея {Id} отклонена")
+
+    @commands.command(name="soc")
+    async def soc(self, ctx: commands.Context):
+        if ctx.channel.name == "scarrow227" and (ctx.author.name == "poal48" or ctx.author.name == "scarrow227"):
+            httpi = tio.http.TwitchHTTP(self, api_token = CFG['api_token_ppSpin'])
+            pu = PartialUser(httpi, 153128317, 'scarrow227')
+            await pu.chat_announcement(CFG['api_token_ppSpin'], 841491788, f"Подпишись на невероятные соц сети скероу:")
+            await pu.chat_announcement(CFG['api_token_ppSpin'], 841491788, f"Телеграм: https://t.me/scarr0w")
+            await pu.chat_announcement(CFG['api_token_ppSpin'], 841491788, f"Ютуб: https://www.youtube.com/channel/UC8TqqH5l0JN823uV8GZbhrQ")
+            await pu.chat_announcement(CFG['api_token_ppSpin'], 841491788, f"Бусти: https://boosty.to/scarrow")
+
                 
 
     @commands.command(name="хуй")
     async def test(self, ctx: commands.Context):
         pass
+        '''user = self.create_user(276061388, "poal48")
+        #await user.create_custom_reward(CFG['api_token'], "Помидор", 500000000, input_required=True)
+        rewards = await user.get_custom_rewards(CFG['api_token'])
+        reds = await rewards[0].get_redemptions(CFG['api_token'], "UNFULFILLED")
+        print(reds[0])'''
 
 async def websocket_handler(ws, bot):
-    async for msg in ws:
-        if bot.isReconnect7tvEvents:
-            bot.isReconnect7tvEvents = False
-            await bot.get_channel("poal48").send(f"Реконекшусь ppSpin")
-            await ws.close()
-            thrd.Thread(target=wb_starter, args=(bot, )).start()
-        msg = json.loads(msg)
-        if msg['op'] == 1: await bot.get_channel("poal48").send("WebSocket 7tv events подключен! uuh")
-        if msg['op'] == 0:
-            if msg['d']['body']['id'] == "6301dcecf7723932b45c06b0": #ne pwgood
-                if 'pushed' in msg['d']['body'].keys():
-                    for i in range(len(msg['d']['body']['pushed'])):
-                        emote = msg['d']['body']['pushed'][i]
-                        await bot.get_channel("poal48").send(f"[7tv] Эмоут {emote['value']['name']} добавлен")
-                elif 'pulled' in msg['d']['body'].keys():
-                    for i in range(len(msg['d']['body']['pulled'])):
-                        emote = msg['d']['body']['pulled'][i]
-                        await bot.get_channel("poal48").send(f"[7tv] Эмоут {emote['old_value']['name']} убран")
-                elif 'updated' in msg['d']['body'].keys():
-                    for i in range(len(msg['d']['body']['updated'])):
-                        emote = msg['d']['body']['updated'][i]
-                        await bot.get_channel("poal48").send(f"[7tv] Эмоут {emote['old_value']['name']} переименнован в {emote['value']['name']}")
-            if msg['d']['body']['id'] == "61c802080bf6300371940381": #pwgood
-                if 'pushed' in msg['d']['body'].keys():
-                    for i in range(len(msg['d']['body']['pushed'])):
-                        emote = msg['d']['body']['pushed'][i]
-                        try:
-                            bot.USERDATA['pwemts'][emote['value']['name']]
-                            bot.USERDATA['pwemts'][emote['value']['name']]['id'] = emote['value']['id']
-                            bot.USERDATA['pwemts'][emote['value']['name']]['pause'] = False
-                        except KeyError:
-                            bot.USERDATA['pwemts'][emote['value']['name']] = {'id': emote['value']['id'], 'used': 0, 'pause': False}
-                        bot.saveUserData()
-                        await bot.get_channel("poal48").send(f"[7tv- PWGood ] Эмоут {emote['value']['name']} добавлен (by {msg['d']['body']['actor']['display_name']})")
-                elif 'pulled' in msg['d']['body'].keys():
-                    for i in range(len(msg['d']['body']['pulled'])):
-                        emote = msg['d']['body']['pulled'][i]
-                        bot.USERDATA['pwemts'][emote['old_value']['name']]['pause'] = True
-                        bot.saveUserData()
-                        await bot.get_channel("poal48").send(f"[7tv- PWGood ] Эмоут {emote['old_value']['name']} убран (by {msg['d']['body']['actor']['display_name']})")
-                elif 'updated' in msg['d']['body'].keys():
-                    for i in range(len(msg['d']['body']['updated'])):
-                        emote = msg['d']['body']['updated'][i]
-                        bot.USERDATA['pwemts'][emote['value']['name']] = bot.USERDATA['pwemts'][emote['old_value']['name']]
-                        bot.USERDATA['pwemts'].pop(emote['old_value']['name'])
-                        bot.saveUserData()
-                        await bot.get_channel("poal48").send(f"[7tv- PWGood ] Эмоут {emote['old_value']['name']} переименнован в {emote['value']['name']} (by {msg['d']['body']['actor']['display_name']})")
-        if msg['op'] == 7:
-            await bot.get_channel("poal48").send(f"WebSocket 7tv  events дисконектится, пытаюсь реконектиться ppSpin")
-            await ws.close()
-            thrd.Thread(target=wb_starter, args=(bot, )).start()
-            return
+    try:
+        async for msg in ws:
+            if bot.isReconnect7tvEvents:
+                bot.isReconnect7tvEvents = False
+                await ws.close()
+                thrd.Thread(target=wb_starter, args=(bot, )).start()
+            msg = json.loads(msg)
+            if msg['op'] == 0:
+                if msg['d']['body']['id'] == "6301dcecf7723932b45c06b0": #ne pwgood
+                    if 'pushed' in msg['d']['body'].keys():
+                        for i in range(len(msg['d']['body']['pushed'])):
+                            emote = msg['d']['body']['pushed'][i]
+                            await bot.get_channel("poal48").send(f"[7tv] Эмоут {emote['value']['name']} добавлен")
+                    elif 'pulled' in msg['d']['body'].keys():
+                        for i in range(len(msg['d']['body']['pulled'])):
+                            emote = msg['d']['body']['pulled'][i]
+                            await bot.get_channel("poal48").send(f"[7tv] Эмоут {emote['old_value']['name']} убран")
+                    elif 'updated' in msg['d']['body'].keys():
+                        for i in range(len(msg['d']['body']['updated'])):
+                            emote = msg['d']['body']['updated'][i]
+                            await bot.get_channel("poal48").send(f"[7tv] Эмоут {emote['old_value']['name']} переименнован в {emote['value']['name']}")
+                if msg['d']['body']['id'] == "61c802080bf6300371940381": #pwgood
+                    if 'pushed' in msg['d']['body'].keys():
+                        for i in range(len(msg['d']['body']['pushed'])):
+                            emote = msg['d']['body']['pushed'][i]
+                            try:
+                                bot.USERDATA['pwemts'][emote['value']['name']]
+                                bot.USERDATA['pwemts'][emote['value']['name']]['id'] = emote['value']['id']
+                                bot.USERDATA['pwemts'][emote['value']['name']]['pause'] = False
+                            except KeyError:
+                                bot.USERDATA['pwemts'][emote['value']['name']] = {'id': emote['value']['id'], 'used': 0, 'pause': False}
+                            bot.saveUserData()
+                            await bot.get_channel("poal48").send(f"[7tv- PWGood ] Эмоут {emote['value']['name']} добавлен (by {msg['d']['body']['actor']['display_name']})")
+                    elif 'pulled' in msg['d']['body'].keys():
+                        for i in range(len(msg['d']['body']['pulled'])):
+                            emote = msg['d']['body']['pulled'][i]
+                            bot.USERDATA['pwemts'][emote['old_value']['name']]['pause'] = True
+                            bot.saveUserData()
+                            await bot.get_channel("poal48").send(f"[7tv- PWGood ] Эмоут {emote['old_value']['name']} убран (by {msg['d']['body']['actor']['display_name']})")
+                    elif 'updated' in msg['d']['body'].keys():
+                        for i in range(len(msg['d']['body']['updated'])):
+                            emote = msg['d']['body']['updated'][i]
+                            bot.USERDATA['pwemts'][emote['value']['name']] = bot.USERDATA['pwemts'][emote['old_value']['name']]
+                            bot.USERDATA['pwemts'].pop(emote['old_value']['name'])
+                            bot.saveUserData()
+                            await bot.get_channel("poal48").send(f"[7tv- PWGood ] Эмоут {emote['old_value']['name']} переименнован в {emote['value']['name']} (by {msg['d']['body']['actor']['display_name']})")
+    finally:
+        await ws.close()
+        thrd.Thread(target=wb_starter, args=(bot, )).start()
+        return
 
 async def websocket_mainloop(bot):
-    await asyncio.sleep(10)
-    async with wbscks.connect("wss://events.7tv.io/v3") as ws:
-        await ws.send('{"op": 35, "d": {"type": "emote_set.update", "condition": {"object_id": "6301dcecf7723932b45c06b0"}}}')
-        await ws.send('{"op": 35, "d": {"type": "emote_set.update", "condition": {"object_id": "61c802080bf6300371940381"}}}')
-        await websocket_handler(ws, bot)
+    exc = True
+    while exc:
+        exc = False
+        try:
+            async with wbscks.connect("wss://events.7tv.io/v3") as ws:
+                await ws.send('{"op": 35, "d": {"type": "emote_set.update", "condition": {"object_id": "6301dcecf7723932b45c06b0"}}}')
+                await ws.send('{"op": 35, "d": {"type": "emote_set.update", "condition": {"object_id": "61c802080bf6300371940381"}}}')
+                await websocket_handler(ws, bot)
+        except Exception as e:
+            exc = True
+            await bot.get_channel("ppspin").send(f"7тв хуйня не подключилась: {e} {type(e)} POAL48")
+            await asyncio.sleep(10)
         
 
 def between_callback(args):
@@ -3854,120 +4425,140 @@ async def events(bot):
     print("Канал для ивентового устоновлен! pwgoodKlass")
     events = {'gm': True, 'gn': True, 'emt': True, 'd0': True, 'd2': True, 'd4': True, 'd5': True, 'd6': True}
     while True:
-        if dt.datetime.now().hour == 8 and dt.datetime.now().minute == 0 and events['gm']:  
-            events['gm'] = False
-            events['gn'] = True
-            await bot.eventctx.send("Всем утра! GoodMorning")
-            await bot.more500send(bot.eventctx, "POAL48", start="GoodMorning", end="GoodMorning")
-        if dt.datetime.now().hour == 0 and dt.datetime.now().minute == 0 and events['gn']:
-            events['gn'] = False
-            events['gm'] = True
-            await bot.eventctx.send("Всем спокойной ночи! catSleep")
-            if randint(0, 100): await bot.more500send(bot.eventctx, "POAL48", start="catSleep", end="catSleep")
-            else:
-                bror = []
-                for i in range(500):
-                    bror.append("The_il_ brorAhuel")
-                await bot.more500send(bot.eventctx, " ".join(bror), start="catSleep", end="catSleep", delay=3)
-        if dt.datetime.now().hour == 0 and dt.datetime.now().minute == 0 and dt.datetime.now().weekday() == 0 and events['d0']:
-            events['d0'] = False
-            events['d6'] = True
-            pu = bot.create_user(276061388, "poal48")
-            await pu.chat_announcement(CFG['api_token_ppSpin'], 841491788, f"Monday !")
-        if dt.datetime.now().hour == 0 and dt.datetime.now().minute == 0 and dt.datetime.now().weekday() == 2 and events['d2']:
-            events['d2'] = False
-            events['d0'] = True
-            pu = bot.create_user(276061388, "poal48")
-            await pu.chat_announcement(CFG['api_token_ppSpin'], 841491788, f"JABA TeaTime")
-        if dt.datetime.now().hour == 0 and dt.datetime.now().minute == 0 and dt.datetime.now().weekday() == 4 and events['d4']:
-            events['d4'] = False
-            events['d2'] = True
-            pu = bot.create_user(276061388, "poal48")
-            await pu.chat_announcement(CFG['api_token_ppSpin'], 841491788, f"Friday !")
-        if dt.datetime.now().hour == 0 and dt.datetime.now().minute == 0 and dt.datetime.now().weekday() == 5 and events['d5']:
-            events['d5'] = False
-            events['d4'] = True
-            pu = bot.create_user(276061388, "poal48")
-            await pu.chat_announcement(CFG['api_token_ppSpin'], 841491788, f"saturday")
-        if dt.datetime.now().hour == 0 and dt.datetime.now().minute == 0 and dt.datetime.now().weekday() == 6 and events['d6']:
-            events['d6'] = False
-            events['d5'] = True
-            pu = bot.create_user(276061388, "poal48")
-            await pu.chat_announcement(CFG['api_token_ppSpin'], 841491788, f"MondayTomorow ")
-        if dt.datetime.now().minute == 0 and events['emt']:
-            events['emt'] = False
-            if not bot.isLastMsgPpSpin['poal48']:
-                emt = choice(bot.emts)
-                if emt['data']['flags'] == 256: await bot.eventctx.send(f"frame145delay007s {emt['name']}")
-                else: await bot.eventctx.send(f"{emt['name']}")
-                bot.isLastMsgPpSpin['poal48'] = True
-            if not bot.isLastMsgPpSpin['the_il_']:
-                emt = choice(bot.emtsil)
-                if emt['data']['flags'] == 256: await bot.get_channel("the_il_").send(f"frame145delay007s {emt['name']}")
-                else: await bot.get_channel("the_il_").send(f"{emt['name']}")
-                bot.isLastMsgPpSpin['the_il_'] = True
-            if not bot.isLastMsgPpSpin['enihei']:
-                emt = choice(bot.emtshei)
-                if emt['data']['flags'] == 256: await bot.get_channel("enihei").send(f"frame145delay007s {emt['name']}")
-                else: await bot.get_channel("enihei").send(f"{emt['name']}")
-                bot.isLastMsgPpSpin['enihei'] = True
-            if not bot.isLastMsgPpSpin['shadowdemonhd_']:
-                emt = choice(bot.emtsdemon)
-                if emt['data']['flags'] == 256: await bot.get_channel("shadowdemonhd_").send(f"frame145delay007s {emt['name']}")
-                else: await bot.get_channel("shadowdemonhd_").send(f"{emt['name']}")
-                bot.isLastMsgPpSpin['shadowdemonhd_'] = True
-            if not bot.isLastMsgPpSpin['tatt04ek']:
-                emt = choice(bot.emts04)
-                if emt['data']['flags'] == 256: await bot.get_channel("tatt04ek").send(f"frame145delay007s {emt['name']}")
-                else: await bot.get_channel("tatt04ek").send(f"{emt['name']}")
-                bot.isLastMsgPpSpin['tatt04ek'] = True
-            await bot.get_channel("alexoff35").send(f"{choice(bot.emtsoff)['name']}")
-            await bot.get_channel("erynga").send(f"{choice(bot.emtserynga)['name']}")
-            if not bot.isLastMsgPpSpin['red3xtop']:
-                emt = choice(bot.emtsred3x)
-                if emt['data']['flags'] == 256: await bot.get_channel("red3xtop").send(f"frame145delay007s {emt['name']}")
-                else: await bot.get_channel("red3xtop").send(f"{emt['name']}")
-                bot.isLastMsgPpSpin['red3xtop'] = True
-            if not bot.isLastMsgPpSpin['orlega_']:
-                emt = choice(bot.emtsorl)
-                if emt['data']['flags'] == 256: await bot.get_channel("orlega_").send(f"frame145delay007s {emt['name']}")
-                else: await bot.get_channel("orlega_").send(f"{emt['name']}")
-                bot.isLastMsgPpSpin['orlega_'] = True
-            if not bot.isLastMsgPpSpin['wanderning_']:
-                emt = choice(bot.emtswand)
-                if emt['data']['flags'] == 256: await bot.get_channel("wanderning_").send(f"frame145delay007s {emt['name']}")
-                else: await bot.get_channel("wanderning_").send(f"{emt['name']}")
-                bot.isLastMsgPpSpin['wanderning_'] = True
-            if not bot.isLastMsgPpSpin['echoinshade']:
-                emt = choice(bot.emtsecho)
-                if emt['data']['flags'] == 256: await bot.get_channel("echoinshade").send(f"frame145delay007s {emt['name']}")
-                else: await bot.get_channel("echoinshade").send(f"{emt['name']}")
-                bot.isLastMsgPpSpin['echoinshade'] = True
-        if dt.datetime.now().minute != 0 and not events['emt']:
-            events['emt'] = True
-        '''if bot.testThat:
-            if not bot.isLastMsgPpSpin['poal48']:
-                await bot.eventctx.send(f"{choice(bot.emts)['name']}")
-                bot.isLastMsgPpSpin['poal48'] = True
-            if not bot.isLastMsgPpSpin['the_il_']:
-                await bot.get_channel("the_il_").send(f"{choice(bot.emtsil)['name']}")
-                bot.isLastMsgPpSpin['the_il_'] = True
-            if not bot.isLastMsgPpSpin['enihei']:
-                await bot.get_channel("enihei").send(f"{choice(bot.emtshei)['name']}")
-                bot.isLastMsgPpSpin['enihei'] = True
-            if not bot.isLastMsgPpSpin['shadowdemonhd_']:
-                await bot.get_channel("shadowdemonhd_").send(f"{choice(bot.emtsdemon)['name']}")
-                bot.isLastMsgPpSpin['shadowdemonhd_'] = True
-            if not bot.isLastMsgPpSpin['tatt04ek']:
-                await bot.get_channel("tatt04ek").send(f"{choice(bot.emts04)['name']}")
-                bot.isLastMsgPpSpin['tatt04ek'] = True
-            if not bot.isLastMsgPpSpin['alexoff35']:
+        try:
+            if dt.datetime.now().hour == 8 and dt.datetime.now().minute == 0 and events['gm']:  
+                events['gm'] = False
+                events['gn'] = True
+                await bot.eventctx.send("Всем утра! GoodMorning")
+                await bot.more500send(bot.eventctx, "POAL48", start="GoodMorning", end="GoodMorning")
+            if dt.datetime.now().hour == 0 and dt.datetime.now().minute == 0 and events['gn']:
+                events['gn'] = False
+                events['gm'] = True
+                await bot.eventctx.send("Всем спокойной ночи! catSleep")
+                if randint(0, 100): await bot.more500send(bot.eventctx, "POAL48", start="catSleep", end="catSleep")
+                else:
+                    bror = []
+                    for i in range(500):
+                        bror.append("The_il_ brorAhuel")
+                    await bot.more500send(bot.eventctx, " ".join(bror), start="catSleep", end="catSleep", delay=3)
+            if dt.datetime.now().hour == 0 and dt.datetime.now().minute == 0 and dt.datetime.now().weekday() == 0 and events['d0']:
+                events['d0'] = False
+                events['d6'] = True
+                #pu = bot.create_user(276061388, "poal48")
+                #await pu.chat_announcement(CFG['api_token_ppSpin'], 841491788, f"Monday !")
+                await bot.get_channel("poal48").send("Monday !")
+            if dt.datetime.now().hour == 0 and dt.datetime.now().minute == 0 and dt.datetime.now().weekday() == 2 and events['d2']:
+                events['d2'] = False
+                events['d0'] = True
+                #pu = bot.create_user(276061388, "poal48")
+                #await pu.chat_announcement(CFG['api_token_ppSpin'], 841491788, f"JABA TeaTime")
+                await bot.get_channel("poal48").send("JABA TeaTime")
+            if dt.datetime.now().hour == 0 and dt.datetime.now().minute == 0 and dt.datetime.now().weekday() == 4 and events['d4']:
+                events['d4'] = False
+                events['d2'] = True
+                #pu = bot.create_user(276061388, "poal48")
+                #await pu.chat_announcement(CFG['api_token_ppSpin'], 841491788, f"Friday !")
+                await bot.get_channel("poal48").send("Friday !")
+            if dt.datetime.now().hour == 0 and dt.datetime.now().minute == 0 and dt.datetime.now().weekday() == 5 and events['d5']:
+                events['d5'] = False
+                events['d4'] = True
+                #pu = bot.create_user(276061388, "poal48")
+                #await pu.chat_announcement(CFG['api_token_ppSpin'], 841491788, f"saturday")
+                await bot.get_channel("poal48").send("saturday")
+            if dt.datetime.now().hour == 0 and dt.datetime.now().minute == 0 and dt.datetime.now().weekday() == 6 and events['d6']:
+                events['d6'] = False
+                events['d5'] = True
+                #pu = bot.create_user(276061388, "poal48")
+                #await pu.chat_announcement(CFG['api_token_ppSpin'], 841491788, f"MondayTomorow ")
+                await bot.get_channel("poal48").send("MondayTomorow ")
+            if dt.datetime.now().minute == 0 and events['emt']:
+                events['emt'] = False
+                if not bot.isLastMsgPpSpin['poal48']:
+                    emt = choice(bot.emts)
+                    if emt['data']['flags'] == 256: await bot.eventctx.send(f"frame145delay007s {emt['name']}")
+                    else: await bot.eventctx.send(f"{emt['name']}")
+                    bot.isLastMsgPpSpin['poal48'] = True
+                if not bot.isLastMsgPpSpin['the_il_']:
+                    emt = choice(bot.emtsil)
+                    if emt['data']['flags'] == 256: await bot.get_channel("the_il_").send(f"frame145delay007s {emt['name']}")
+                    else: await bot.get_channel("the_il_").send(f"{emt['name']}")
+                    bot.isLastMsgPpSpin['the_il_'] = True
+                if not bot.isLastMsgPpSpin['enihei']:
+                    emt = choice(bot.emtshei)
+                    if emt['data']['flags'] == 256: await bot.get_channel("enihei").send(f"frame145delay007s {emt['name']}")
+                    else: await bot.get_channel("enihei").send(f"{emt['name']}")
+                    bot.isLastMsgPpSpin['enihei'] = True
+                if not bot.isLastMsgPpSpin['shadowdemonhd_']:
+                    emt = choice(bot.emtsdemon)
+                    if emt['data']['flags'] == 256: await bot.get_channel("shadowdemonhd_").send(f"frame145delay007s {emt['name']}")
+                    else: await bot.get_channel("shadowdemonhd_").send(f"{emt['name']}")
+                    bot.isLastMsgPpSpin['shadowdemonhd_'] = True
+                if not bot.isLastMsgPpSpin['tatt04ek']:
+                    emt = choice(bot.emts04)
+                    if emt['data']['flags'] == 256: await bot.get_channel("tatt04ek").send(f"frame145delay007s {emt['name']}")
+                    else: await bot.get_channel("tatt04ek").send(f"{emt['name']}")
+                    bot.isLastMsgPpSpin['tatt04ek'] = True
                 await bot.get_channel("alexoff35").send(f"{choice(bot.emtsoff)['name']}")
-                bot.isLastMsgPpSpin['alexoff35'] = True
-            if not bot.isLastMsgPpSpin['red3xtop']:
-                await bot.get_channel("red3xtop").send(f"{choice(bot.emtsred3x)['name']}")
-                bot.isLastMsgPpSpin['red3xtop'] = True
-            bot.testThat = False'''
+                await bot.get_channel("erynga").send(f"{choice(bot.emtserynga)['name']}")
+                if not bot.isLastMsgPpSpin['red3xtop']:
+                    emt = choice(bot.emtsred3x)
+                    if emt['data']['flags'] == 256: await bot.get_channel("red3xtop").send(f"frame145delay007s {emt['name']}")
+                    else: await bot.get_channel("red3xtop").send(f"{emt['name']}")
+                    bot.isLastMsgPpSpin['red3xtop'] = True
+                if not bot.isLastMsgPpSpin['orlega']:
+                    emt = choice(bot.emtsorl)
+                    if emt['data']['flags'] == 256: await bot.get_channel("orlega").send(f"frame145delay007s {emt['name']}")
+                    else: await bot.get_channel("orlega").send(f"{emt['name']}")
+                    bot.isLastMsgPpSpin['orlega'] = True
+                if not bot.isLastMsgPpSpin['wanderning_']:
+                    emt = choice(bot.emtswand)
+                    if emt['data']['flags'] == 256: await bot.get_channel("wanderning_").send(f"frame145delay007s {emt['name']}")
+                    else: await bot.get_channel("wanderning_").send(f"{emt['name']}")
+                    bot.isLastMsgPpSpin['wanderning_'] = True
+                if not bot.isLastMsgPpSpin['echoinshade']:
+                    emt = choice(bot.emtsecho)
+                    if emt['data']['flags'] == 256: await bot.get_channel("echoinshade").send(f"frame145delay007s {emt['name']}")
+                    else: await bot.get_channel("echoinshade").send(f"{emt['name']}")
+                    bot.isLastMsgPpSpin['echoinshade'] = True
+                if not bot.isLastMsgPpSpin['spazmmmm']:
+                    emt = choice(bot.emtsspazm)
+                    if emt['data']['flags'] == 256: await bot.get_channel("spazmmmmm").send(f"frame145delay007s {emt['name']}")
+                    else: await bot.get_channel("spazmmmm").send(f"{emt['name']}")
+                    bot.isLastMsgPpSpin['spazmmmm'] = True
+                if not bot.isLastMsgPpSpin['scarrow227']:
+                    emt = choice(bot.emtsavacus)
+                    if emt['data']['flags'] == 256: await bot.get_channel("scarrow227").send(f"frame145delay007s {emt['name']}")
+                    else: await bot.get_channel("scarrow227").send(f"{emt['name']}")
+                    bot.isLastMsgPpSpin['scarrow227'] = True
+            if dt.datetime.now().minute != 0 and not events['emt']:
+                events['emt'] = True
+            '''if bot.testThat:
+                if not bot.isLastMsgPpSpin['poal48']:
+                    await bot.eventctx.send(f"{choice(bot.emts)['name']}")
+                    bot.isLastMsgPpSpin['poal48'] = True
+                if not bot.isLastMsgPpSpin['the_il_']:
+                    await bot.get_channel("the_il_").send(f"{choice(bot.emtsil)['name']}")
+                    bot.isLastMsgPpSpin['the_il_'] = True
+                if not bot.isLastMsgPpSpin['enihei']:
+                    await bot.get_channel("enihei").send(f"{choice(bot.emtshei)['name']}")
+                    bot.isLastMsgPpSpin['enihei'] = True
+                if not bot.isLastMsgPpSpin['shadowdemonhd_']:
+                    await bot.get_channel("shadowdemonhd_").send(f"{choice(bot.emtsdemon)['name']}")
+                    bot.isLastMsgPpSpin['shadowdemonhd_'] = True
+                if not bot.isLastMsgPpSpin['tatt04ek']:
+                    await bot.get_channel("tatt04ek").send(f"{choice(bot.emts04)['name']}")
+                    bot.isLastMsgPpSpin['tatt04ek'] = True
+                if not bot.isLastMsgPpSpin['alexoff35']:
+                    await bot.get_channel("alexoff35").send(f"{choice(bot.emtsoff)['name']}")
+                    bot.isLastMsgPpSpin['alexoff35'] = True
+                if not bot.isLastMsgPpSpin['red3xtop']:
+                    await bot.get_channel("red3xtop").send(f"{choice(bot.emtsred3x)['name']}")
+                    bot.isLastMsgPpSpin['red3xtop'] = True
+                bot.testThat = False'''
+        except Exception as e:
+            print("fallen by "+ str(e))
+            await asyncio.sleep(5)
+
 
             
 bot = Bot()
@@ -3985,6 +4576,21 @@ bSpin = tb.TeleBot(CFG['telebot_ppSpin'])
 def ping_telebot(msg):
     bAuth.send_message(msg.chat.id, "Плюнк!!")
 
+@bAuth.message_handler(commands=['balls'])
+def spauth_telebot_balls(msg: types.Message):
+    bAuth.send_message(msg.chat.id, "https://twitchtokengenerator.com")
+    bAuth.send_message(msg.chat.id, "Перейди на сайт > Custom Scope > Добавь к скоупам channel:manage:redemptions или просто выбери все скоупы > Generate Token > Access Token отправить сюда")
+    bAuth.who = msg.text.split()[1]
+    bAuth.register_next_step_handler(msg, spauth_balls_2)
+
+def spauth_balls_2(msg: types.Message):
+    try: bot.sp_data[bAuth.who]['twitch'] = msg.text
+    except KeyError: bAuth.send_message(msg.chat.id, "Авторизуйся сначала через спотифай")
+    spdataf = open("spotify.spdata", 'w')
+    json.dump(bot.sp_data, spdataf)
+    spdataf.close()
+    bAuth.send_message(msg.chat.id, "Токен сохранен!")
+
 @bAuth.message_handler(commands=['sppoal48'])
 def spauth_telebot_poal48(msg):
     resp = req.get("https://clck.ru/--", params={'url': "https://accounts.spotify.com/authorize?" +  \
@@ -3998,7 +4604,7 @@ def spauth_telebot_poal48(msg):
                 "redirect_uri" + '=' + "http://денис.space/echo/code/" }).text
     bAuth.send_message(msg.chat.id, "Авторизация Spotify")
     bAuth.send_message(msg.chat.id, str(resp))
-    bAuth.send_message(msg.chat.id, "Код сюда же")
+    bAuth.send_message(msg.chat.id, "Код сюда же (денис говна поел, бери код из строки адреса: http://денис.space/echo/code?code=КОД")
     bAuth.who = "poal48"
     bAuth.register_next_step_handler(msg, spauth_step2)
 
@@ -4015,7 +4621,7 @@ def spauth_telebot_enihei(msg):
                 "redirect_uri" + '=' + "http://денис.space/echo/code/" }).text
     bAuth.send_message(msg.chat.id, "Авторизация Spotify")
     bAuth.send_message(msg.chat.id, str(resp))
-    bAuth.send_message(msg.chat.id, "Код сюда же")
+    bAuth.send_message(msg.chat.id, "Код сюда же (денис говна поел, бери код из строки адреса: http://денис.space/echo/code?code=КОД")
     bAuth.who = "enihei"
     bAuth.register_next_step_handler(msg, spauth_step2)
 
@@ -4032,7 +4638,7 @@ def spauth_telebot_tatt04ek(msg):
                 "redirect_uri" + '=' + "http://денис.space/echo/code/" }).text
     bAuth.send_message(msg.chat.id, "Авторизация Spotify")
     bAuth.send_message(msg.chat.id, str(resp))
-    bAuth.send_message(msg.chat.id, "Код сюда же")
+    bAuth.send_message(msg.chat.id, "Код сюда же (денис говна поел, бери код из строки адреса: http://денис.space/echo/code?code=КОД")
     bAuth.who = "tatt04ek"
     bAuth.register_next_step_handler(msg, spauth_step2)
 
@@ -4049,11 +4655,11 @@ def spauth_telebot_shadowdemonhd_(msg):
                 "redirect_uri" + '=' + "http://денис.space/echo/code/" }).text
     bAuth.send_message(msg.chat.id, "Авторизация Spotify")
     bAuth.send_message(msg.chat.id, str(resp))
-    bAuth.send_message(msg.chat.id, "Код сюда же")
+    bAuth.send_message(msg.chat.id, "Код сюда же (денис говна поел, бери код из строки адреса: http://денис.space/echo/code?code=КОД")
     bAuth.who = "shadowdemonhd_"
     bAuth.register_next_step_handler(msg, spauth_step2)
 
-@bAuth.message_handler(commands=['orlega_'])
+@bAuth.message_handler(commands=['orlega'])
 def spauth_telebot_shadowdemonhd_(msg):
     resp = req.get("https://clck.ru/--", params={'url': "https://accounts.spotify.com/authorize?" +  \
                 'response_type' + '=' + "code" + "&" \
@@ -4066,8 +4672,42 @@ def spauth_telebot_shadowdemonhd_(msg):
                 "redirect_uri" + '=' + "http://денис.space/echo/code/" }).text
     bAuth.send_message(msg.chat.id, "Авторизация Spotify")
     bAuth.send_message(msg.chat.id, str(resp))
-    bAuth.send_message(msg.chat.id, "Код сюда же")
-    bAuth.who = "orlega_"
+    bAuth.send_message(msg.chat.id, "Код сюда же (денис говна поел, бери код из строки адреса: http://денис.space/echo/code?code=КОД")
+    bAuth.who = "orlega"
+    bAuth.register_next_step_handler(msg, spauth_step2)
+
+@bAuth.message_handler(commands=['spazmmmm'])
+def spauth_telebot_shadowdemonhd_(msg):
+    resp = req.get("https://clck.ru/--", params={'url': "https://accounts.spotify.com/authorize?" +  \
+                'response_type' + '=' + "code" + "&" \
+                "client_id" + '=' + CFG['sp_client_id'] + "&" \
+                "scope" + '=' + 'ugc-image-upload user-read-playback-state app-remote-control user-modify-playback-state'\
+                    ' playlist-read-private user-follow-modify playlist-read-collaborative user-follow-read'\
+                    ' user-read-currently-playing user-read-playback-position user-library-modify'\
+                    ' playlist-modify-private playlist-modify-public user-read-email user-top-read '\
+                    ' user-read-recently-played user-read-private user-library-read' + "&" \
+                "redirect_uri" + '=' + "http://денис.space/echo/code/" }).text
+    bAuth.send_message(msg.chat.id, "Авторизация Spotify")
+    bAuth.send_message(msg.chat.id, str(resp))
+    bAuth.send_message(msg.chat.id, "Код сюда же (денис говна поел, бери код из строки адреса: http://денис.space/echo/code?code=КОД")
+    bAuth.who = "spazmmmm"
+    bAuth.register_next_step_handler(msg, spauth_step2)
+
+@bAuth.message_handler(commands=['scarrow227'])
+def spauth_telebot_shadowdemonhd_(msg):
+    resp = req.get("https://clck.ru/--", params={'url': "https://accounts.spotify.com/authorize?" +  \
+                'response_type' + '=' + "code" + "&" \
+                "client_id" + '=' + CFG['sp_client_id'] + "&" \
+                "scope" + '=' + 'ugc-image-upload user-read-playback-state app-remote-control user-modify-playback-state'\
+                    ' playlist-read-private user-follow-modify playlist-read-collaborative user-follow-read'\
+                    ' user-read-currently-playing user-read-playback-position user-library-modify'\
+                    ' playlist-modify-private playlist-modify-public user-read-email user-top-read '\
+                    ' user-read-recently-played user-read-private user-library-read' + "&" \
+                "redirect_uri" + '=' + "http://денис.space/echo/code/" }).text
+    bAuth.send_message(msg.chat.id, "Авторизация Spotify")
+    bAuth.send_message(msg.chat.id, str(resp))
+    bAuth.send_message(msg.chat.id, "Код сюда же (денис говна поел, бери код из строки адреса: http://денис.space/echo/code?code=КОД")
+    bAuth.who = "scarrow227"
     bAuth.register_next_step_handler(msg, spauth_step2)
 
     
@@ -4125,7 +4765,7 @@ def notifer_test(msg):
         bNot.delete_message(msg.chat.id, bNot.send_message(msg.chat.id, "123").id, timeout=10)'''   
 
 @bNot.message_handler(content_types=["animation", "audio", "document", "photo", "sticker", "video", "voice", "video_note", "poll", "text"])
-def notifer_message(msg):
+def notifer_message_pwgood(msg):
     if not msg.sender_chat: return
     if msg.sender_chat.type == "channel" and (msg.sender_chat.username == "" or msg.sender_chat.username == "pwgood"):
         fw = ""
@@ -4200,15 +4840,11 @@ def notifer_message(msg):
             fw += f" Кружочек (хз, наверное): {resp['link']} "
         bot.tgfw += fw
 
-'''@bNot.channel_post_handler(content_types=["animation", "audio", "document", "photo", "sticker", "video", "voice", "video_note", "poll", "text"])
-def notifer_post(msg):
-    if True:
-        fw = ""
-        if msg.text: fw += msg.text
-        if msg.caption: 
-            fw += ' "'
-            fw += msg.caption
-            fw += ' "'
+@bNot.channel_post_handler(content_types=["animation", "audio", "document", "photo", "sticker", "video", "voice", "video_note", "poll", "text"])
+def notifer_post_cd(msg):
+    print(msg)
+    if msg.chat.username == "CD_lki":
+        fw = "" 
         if msg.photo:
             file_i = bNot.get_file(msg.photo[len(msg.photo)-1].file_id)
             file_d = bNot.download_file(file_i.file_path)
@@ -4216,7 +4852,12 @@ def notifer_post(msg):
             wpt.write(file_d)
             wpt.close()
             resp = req.post("https://gachi.gay/api/upload", files={'file': open("temp.tg", 'rb')}).json()
-            fw += f" Фото: {resp['link']} "
+            fw += f" {resp['link']} "
+        if msg.text: fw += msg.text
+        if msg.caption: 
+            fw += ' " '
+            fw += msg.caption
+            fw += ' "'
         if msg.audio:
             file_i = bNot.get_file(msg.audio.file_id)
             file_d = bNot.download_file(file_i.file_path)
@@ -4273,7 +4914,8 @@ def notifer_post(msg):
             wpt.close()
             resp = req.post("https://gachi.gay/api/upload", files={'file': open("temp.tg", 'rb')}).json()
             fw += f" Кружочек (хз, наверное): {resp['link']} "
-        bot.tgfw += fw'''
+        bot.tgfwcd += fw
+        print(fw)
 
 bAvg.USERDATA = json.load(open("avgUSERDATA.data", 'r'))
 
@@ -4387,9 +5029,9 @@ def bSpinStart(msg):
 
 def startBotAvaGame():
     #while True:
-    if True:
+    if True: pass
         #try:
-        bAvg.polling(none_stop=False)
+        #bAvg.polling(none_stop=False)
         #except Exception as e: print(f"bAvg {type(e)}: {e}")
         
 def startBotAuth():
